@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>mir_joint_space_controller</name>
+  <version>0.1.0</version>
+  <description>
+      Control Youbot arm using joint velocities.
+  </description>
+  <license>GPLv3</license>
+
+  <maintainer email="santosh.thoduka@h-brs.de">Santosh Thoduka</maintainer>
+
+  <author email="dharmingeo@gmail.com">Dharmin B.</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rospy</build_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>mir_pregrasp_planning</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
+</package>
