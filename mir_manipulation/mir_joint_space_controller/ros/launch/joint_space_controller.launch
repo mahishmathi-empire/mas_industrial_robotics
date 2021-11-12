@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<launch>
+
+    <arg name="joint_vel_topic" default="/arm_1/arm_controller/velocity_command"/>
+    <arg name="joint_states_topic" default="/joint_states"/>
+
+    <node pkg="mir_joint_space_controller" name="joint_space_controller"
+          type="joint_space_controller_node" output="screen" >
+        <remap from="~joint_vel" to="$(arg joint_vel_topic)"/>
+        <remap from="~joint_states" to="$(arg joint_states_topic)"/>
+    </node>
+</launch>
