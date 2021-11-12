@@ -3,10 +3,17 @@
 
     <arg name="joint_vel_topic" default="/arm_1/arm_controller/velocity_command"/>
     <arg name="joint_states_topic" default="/joint_states"/>
+    <arg name="joy_topic" default="/joy"/>
 
     <node pkg="mir_joint_space_controller" name="joint_space_controller"
           type="joint_space_controller_node" output="screen" >
+
         <remap from="~joint_vel" to="$(arg joint_vel_topic)"/>
         <remap from="~joint_states" to="$(arg joint_states_topic)"/>
+        <remap from="~joy" to="$(arg joy_topic)"/>
+        
+        <param name="~p_gain" value="2.0"/>
+        <param name="~d_gain" value="0.5"/>
+        <param name="~control_rate" value="10"/>
     </node>
 </launch>
