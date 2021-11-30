@@ -22,7 +22,7 @@ class Kinematics(object):
         if num_of_segments == 6 and self.chain.getSegment(5).getName() == self.tip:
             self.ee_to_arm_dist = self.chain.getSegment(5).getFrameToTip().p.z()
         else:
-            rospy.logerr('Given tip not found in chain. Using default (arm_link_0)')
+            print('Given tip not found in chain. Using default (arm_link_5)')
             self.tip = 'arm_link_5'
             self.chain = self._get_chain()
             self.ee_to_arm_dist = 0.0
