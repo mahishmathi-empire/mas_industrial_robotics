@@ -5,6 +5,8 @@
     <arg name="joint_states_topic" default="/joint_states"/>
     <arg name="joy_topic" default="/joy"/>
 
+    <arg name="tip_name" default="gripper_static_grasp_link"/>
+
     <node pkg="mir_joint_space_controller" name="joint_space_controller"
           type="joint_space_controller_node" output="screen" >
 
@@ -15,5 +17,6 @@
         <param name="~p_gain" value="2.0"/>
         <param name="~d_gain" value="0.5"/>
         <param name="~control_rate" value="10"/>
+        <param name="~tip_name" value="$(arg tip_name)"/>
     </node>
 </launch>

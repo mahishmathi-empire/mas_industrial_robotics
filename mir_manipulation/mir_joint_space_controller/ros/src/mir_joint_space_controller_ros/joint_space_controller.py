@@ -17,17 +17,18 @@ class JointSpaceController(object):
     """Control youbot arm using joint velocities"""
 
     def __init__(self):
+        # ros params
+        self.goal_joint_tolerance = rospy.get_param('~joint_tolerance', 0.1)
+        tip_name = rospy.get_param('~tip_name', 'gripper_static_grasp_link')
+
         # Class variables
         # self._goal_joint_angles = None
         self._goal_joint_angles = [2.16420, 1.13446, -2.5481, 1.78896, 2.93075]
         # self._goal_joint_angles = [3.816, 0.0875, -1.5410, 3.3455, 1.3626]
         self._curr_joint_angles = None
         self._curr_joint_vel = None
-        self._kinematics = Kinematics(tip='gripper_static_grasp_link')
+        self._kinematics = Kinematics(tip=tip_name)
         self._num_of_angles = 5
-
-        # tolerances
-        self.goal_joint_tolerance = rospy.get_param('~joint_tolerance', 0.1)
 
         # controller params
         self.p_gain = rospy.get_param('~p_gain', 2.0)
