@@ -14,8 +14,6 @@
         <remap from="~joint_states" to="$(arg joint_states_topic)"/>
         <remap from="~joy" to="$(arg joy_topic)"/>
         
-        <param name="~p_gain" value="2.0"/>
-        <param name="~d_gain" value="0.5"/>
         <param name="~control_rate" value="10"/>
         <param name="~tip_name" value="$(arg tip_name)"/>
     </node>
