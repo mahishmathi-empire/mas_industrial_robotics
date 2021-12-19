@@ -30,6 +30,7 @@ class JointSpaceController
 
         ros::Subscriber joint_states_sub_;
         ros::Subscriber goal_sub_;
+        ros::Subscriber named_goal_sub_;
         ros::Subscriber cancel_sub_;
         ros::Subscriber joy_sub_;
 
@@ -45,18 +46,30 @@ class JointSpaceController
         JointValue max_acc_;
         float goal_tolerance_;
 
+        std::vector<std::string> joint_names_;
+
+        bool open_loop_;
+
+        std::map<std::string, JointValue > named_configurations_;
+
         /* transform related variables */
         std::shared_ptr<tf::TransformListener> tf_listener_;
 
         bool debug_;
 
         void goalCb(const std_msgs::Float32MultiArray::ConstPtr& msg);
+        void namedGoalCb(const std_msgs::String::ConstPtr& msg);
         void cancelCb(const std_msgs::Empty::ConstPtr& msg);
         void joyCb(const sensor_msgs::Joy::ConstPtr& msg);
         void jointStatesCb(const sensor_msgs::JointState::ConstPtr& msg);
 
+        float calcMinimumRequiredTime(float curr, float goal,
+                                      float max_vel, float max_acc);
+
         void reset();
         void pubZeroVel();
+
+        bool readNamedConfig();
 
 };
 

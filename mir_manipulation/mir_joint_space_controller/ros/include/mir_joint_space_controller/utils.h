@@ -21,7 +21,8 @@ class Utils
         static float signedClip(float value, float max_limit, float min_limit);
 
         static brics_actuator::JointVelocities getJointVelocitiesFromJointValue(
-                const JointValue& joint_vel);
+                const JointValue& joint_vel,
+                const std::vector<std::string>& joint_names);
 
 };
 

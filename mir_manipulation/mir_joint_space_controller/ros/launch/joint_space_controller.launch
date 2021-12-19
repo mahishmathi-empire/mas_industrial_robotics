@@ -6,6 +6,8 @@
     <arg name="joy_topic" default="/joy"/>
 
     <arg name="tip_name" default="gripper_static_grasp_link"/>
+    <arg name="open_loop" default="false"/>
+    <arg name="named_configuration_file" default="$(find mir_joint_space_controller)/ros/config/named_configurations.yaml"/>
 
     <node pkg="mir_joint_space_controller" name="joint_space_controller"
           type="joint_space_controller_node" output="screen" >
@@ -16,5 +18,7 @@
         
         <param name="~control_rate" value="10"/>
         <param name="~tip_name" value="$(arg tip_name)"/>
+        <param name="~open_loop" value="$(arg open_loop)"/>
+        <param name="~named_configuration_file" value="$(arg named_configuration_file)"/>
     </node>
 </launch>

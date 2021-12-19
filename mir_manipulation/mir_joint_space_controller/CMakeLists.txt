@@ -28,6 +28,7 @@ add_library(joint_space_controller
 )
 target_link_libraries(joint_space_controller
     ${catkin_LIBRARIES}
+    yaml-cpp
 )
 
 # ==========

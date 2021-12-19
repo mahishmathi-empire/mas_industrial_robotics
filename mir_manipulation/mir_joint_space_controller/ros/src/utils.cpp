@@ -39,13 +39,22 @@ float Utils::signedClip(float value, float max_limit, float min_limit)
 }
 
 brics_actuator::JointVelocities Utils::getJointVelocitiesFromJointValue(
-        const JointValue& joint_vel)
+        const JointValue& joint_vel,
+        const std::vector<std::string>& joint_names)
 {
     brics_actuator::JointVelocities joint_vel_msg;
+    if ( joint_names.size() != joint_vel.size() )
+    {
+        std::cout << Utils::getMsgMod("err")
+                  << "[JointSpaceController] joint_names and joint_vel size mismatch."
+                  << Utils::getMsgMod("end") << std::endl;
+        return joint_vel_msg;
+    }
+
     for ( size_t i = 0; i < joint_vel.size(); i++ )
     {
         brics_actuator::JointValue joint_value_msg;
-        joint_value_msg.joint_uri = "arm_joint_" + std::to_string(i+1);
+        joint_value_msg.joint_uri = joint_names[i];
         joint_value_msg.unit = "s^-1 rad";
         joint_value_msg.value = joint_vel[i];
         joint_vel_msg.velocities.push_back(joint_value_msg);
