@@ -5,6 +5,7 @@
     <arg name="joint_states_topic" default="/joint_states"/>
     <arg name="joy_topic" default="/joy"/>
 
+    <arg name="control_rate" default="10.0"/>
     <arg name="tip_name" default="gripper_static_grasp_link"/>
     <arg name="open_loop" default="false"/>
     <arg name="named_configuration_file" default="$(find mir_joint_space_controller)/ros/config/named_configurations.yaml"/>
@@ -16,9 +17,9 @@
         <remap from="~joint_states" to="$(arg joint_states_topic)"/>
         <remap from="~joy" to="$(arg joy_topic)"/>
         
-        <param name="~control_rate" value="10"/>
-        <param name="~tip_name" value="$(arg tip_name)"/>
-        <param name="~open_loop" value="$(arg open_loop)"/>
-        <param name="~named_configuration_file" value="$(arg named_configuration_file)"/>
+        <param name="~control_rate" type="double" value="$(arg control_rate)"/>
+        <param name="~tip_name" type="str" value="$(arg tip_name)"/>
+        <param name="~open_loop" type="bool" value="$(arg open_loop)"/>
+        <param name="~named_configuration_file" type="str" value="$(arg named_configuration_file)"/>
     </node>
 </launch>

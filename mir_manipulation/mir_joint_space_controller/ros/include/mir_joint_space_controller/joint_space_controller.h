@@ -1,6 +1,8 @@
 #ifndef JOINT_SPACE_CONTROLLER_H
 #define JOINT_SPACE_CONTROLLER_H
 
+#include <chrono>
+
 #include <ros/ros.h>
 
 #include <std_msgs/String.h>
@@ -44,7 +46,10 @@ class JointSpaceController
         JointValue max_vel_;
         JointValue min_vel_;
         JointValue max_acc_;
+        JointValue des_acc_;
         float goal_tolerance_;
+        std::vector<JointValue> traj_;
+        size_t traj_index_;
 
         std::vector<std::string> joint_names_;
 
@@ -65,6 +70,10 @@ class JointSpaceController
 
         float calcMinimumRequiredTime(float curr, float goal,
                                       float max_vel, float max_acc);
+        std::vector<float> calcTrajSingleJoint(float curr, float goal,
+                                               float max_vel, float max_acc);
+        std::vector<JointValue> calcArmTraj(const JointValue& curr,
+                const JointValue& goal, const std::vector<float>& t_array);
 
         void reset();
         void pubZeroVel();
