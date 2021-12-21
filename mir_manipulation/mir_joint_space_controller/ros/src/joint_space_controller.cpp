@@ -18,10 +18,10 @@ JointSpaceController::JointSpaceController():
     curr_vel_.fill(0.0f);
 
     // TODO read from config file or ros param
-    max_vel_.fill(0.5f);
+    max_vel_.fill(1.0f);
     min_vel_.fill(0.001f);
-    max_acc_.fill(1.0f);
-    des_acc_.fill(0.8f);
+    max_acc_.fill(1.5f);
+    des_acc_.fill(0.7f);
 
     // TODO read from config file or ros param
     for ( size_t i = 0; i < current_.size(); i++ )
@@ -185,7 +185,6 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     /* check goal tolerance */
     if ( traj_exec_complete )
     {
-        std::cout << "traj_exec_complete" << std::endl;
         bool reached_goal = true;
         for ( size_t i = 0; i < error.size(); i++ )
         {
@@ -198,6 +197,7 @@ void JointSpaceController::run(const ros::TimerEvent& event)
 
         if ( reached_goal )
         {
+            std::cout << "error: " << error << std::endl;
             std::cout << Utils::getMsgMod("success")
                       << "[JointSpaceController] REACHED GOAL"
                       << Utils::getMsgMod("end") << std::endl;
