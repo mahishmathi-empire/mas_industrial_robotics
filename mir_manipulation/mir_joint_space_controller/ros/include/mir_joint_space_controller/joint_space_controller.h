@@ -29,6 +29,7 @@ class JointSpaceController
         ros::NodeHandle nh_;
 
         ros::Publisher joint_vel_pub_;
+        ros::Publisher debug_pub_;
 
         ros::Subscriber joint_states_sub_;
         ros::Subscriber goal_sub_;
@@ -44,12 +45,14 @@ class JointSpaceController
         JointValue current_;
         JointValue curr_vel_;
         JointValue max_vel_;
+        JointValue des_vel_;
         JointValue min_vel_;
         JointValue max_acc_;
         JointValue des_acc_;
         float goal_tolerance_;
         std::vector<JointValue> traj_;
         size_t traj_index_;
+        std::chrono::steady_clock::time_point traj_start_time_;
 
         std::vector<std::string> joint_names_;
 
@@ -68,14 +71,20 @@ class JointSpaceController
         void joyCb(const sensor_msgs::Joy::ConstPtr& msg);
         void jointStatesCb(const sensor_msgs::JointState::ConstPtr& msg);
 
+        JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
+                                       float time_from_start);
+
         float calcMinimumRequiredTime(float curr, float goal,
                                       float max_vel, float max_acc);
+
         std::vector<float> calcTrajSingleJoint(float curr, float goal,
                                                float max_vel, float max_acc);
+
         std::vector<JointValue> calcArmTraj(const JointValue& curr,
                 const JointValue& goal, const std::vector<float>& t_array);
 
         void reset();
+        void pubDebugMsg();
         void pubZeroVel();
 
         bool readNamedConfig();
