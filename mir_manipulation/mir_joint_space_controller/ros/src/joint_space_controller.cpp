@@ -109,8 +109,8 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     size_t slowest_joint = 0;
     for ( size_t i = 0; i < goal_.size(); i++ )
     {
-        min_req_times[i] = calcMinimumRequiredTime(current_[i], goal_[i],
-                                                   des_vel_[i], des_acc_[i]);
+        min_req_times[i] = Utils::calcMinimumRequiredTime(current_[i], goal_[i],
+                                                          des_vel_[i], des_acc_[i]);
         if ( min_req_times[i] > max_req_time )
         {
             max_req_time = min_req_times[i];
@@ -120,15 +120,29 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     std::cout << "req_time: " << max_req_time << std::endl;
     std::cout << "slowest_joint: " << slowest_joint << std::endl;
 
-    std::vector<float> t_array = calcTrajSingleJoint(
+    std::vector<float> t_array = Utils::calcTrajSingleJoint(
             current_[slowest_joint], goal_[slowest_joint],
-            des_vel_[slowest_joint], des_acc_[slowest_joint]);
+            des_vel_[slowest_joint], des_acc_[slowest_joint], control_sample_time_);
 
-    traj_ = calcArmTraj(current_, goal_, t_array);
-    traj_index_ = 0;
-    traj_start_time_ = std::chrono::steady_clock::now();
+    std::vector<JointValue> ctrl_pts({current_, goal_});
+    traj_ = Utils::calcSplineTrajectory(ctrl_pts, t_array);
+    if ( traj_.size() == 0 )
+    {
+        std::cout << Utils::getMsgMod("warn")
+                  << "[JointSpaceController] Could not plan trajectory."
+                  << Utils::getMsgMod("end") << std::endl;
+        reset();
+    }
+
+    /* print traj */
+    std::cout << "Time  |  Progress  |  Joint Position" << std::endl;
+    for ( size_t i = 0; i < traj_.size(); i++ )
+    {
+        std::cout << i * control_sample_time_ << " " << t_array[i] << " " << traj_[i] << std::endl;
+    }
+
     pubDebugMsg();
-
+    traj_start_time_ = std::chrono::steady_clock::now();
     active_ = true;
 }
 
@@ -196,7 +210,8 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     std::cout << "curr_time: " << curr_time_from_traj_start << std::endl;
     float future_time_from_traj_start = curr_time_from_traj_start + lookahead_time;
     std::cout << "future_time: " << future_time_from_traj_start << std::endl;
-    JointValue target = getJointValueAtTime(traj_, future_time_from_traj_start);
+    JointValue target = Utils::getJointValueAtTime(
+            traj_, future_time_from_traj_start, control_sample_time_);
     JointValue error = target - current_;
 
     if ( target == goal_ )
@@ -274,8 +289,10 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     {
         debug_msg.data.push_back(vel[i]);
     }
-    JointValue ideal_curr_traj_point = getJointValueAtTime(traj_, curr_time_from_traj_start);
-    JointValue ideal_next_traj_point = getJointValueAtTime(traj_, curr_time_from_traj_start+control_sample_time_);
+    JointValue ideal_curr_traj_point = Utils::getJointValueAtTime(
+            traj_, curr_time_from_traj_start, control_sample_time_);
+    JointValue ideal_next_traj_point = Utils::getJointValueAtTime(
+            traj_, curr_time_from_traj_start+control_sample_time_, control_sample_time_);
     JointValue ideal_vel = (ideal_next_traj_point - ideal_curr_traj_point) * control_rate_;
     for ( size_t i = 0; i < ideal_vel.size(); i++ ) // 30 - 35
     {
@@ -283,133 +300,6 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     }
     debug_pub_.publish(debug_msg);
 
-}
-
-JointValue JointSpaceController::getJointValueAtTime(
-        const std::vector<JointValue>& traj, float time_from_start)
-{
-    float traj_index_float = time_from_start / control_sample_time_;
-    int traj_index = time_from_start / control_sample_time_;
-    float t = traj_index_float - traj_index;
-    int traj_next_index = traj_index + 1;
-
-    if ( traj_index >= traj.size() )
-    {
-        traj_index = traj.size() - 1;
-    }
-    if ( traj_next_index >= traj.size() )
-    {
-        traj_next_index = traj.size() - 1;
-    }
-    return (traj[traj_index] * (1.0f - t)) + (traj[traj_next_index] * t);
-}
-
-float JointSpaceController::calcMinimumRequiredTime(float curr, float goal,
-                                                    float max_vel, float max_acc)
-{
-    float D = fabs(goal - curr);
-    float acc_time, const_vel_time;
-    if ( D < (max_vel*max_vel)/max_acc )
-    {
-        // std::cout << "acc and dec" << std::endl;
-        acc_time = sqrt(D/max_acc);
-        const_vel_time = 0.0f;
-    }
-    else
-    {
-        // std::cout << "acc, const and dec" << std::endl;
-        acc_time = max_vel/max_acc;
-        const_vel_time = (D/max_vel) - (max_vel/max_acc);
-    }
-    float min_req_time = (2 * acc_time) + const_vel_time;
-    return min_req_time;
-}
-
-std::vector<float> JointSpaceController::calcTrajSingleJoint(
-        float curr, float goal, float max_vel, float max_acc)
-{
-    float D = fabs(goal - curr);
-    float acc_time, const_vel_time, desired_vel;
-    if ( D < (max_vel*max_vel)/max_acc )
-    {
-        acc_time = sqrt(D/max_acc);
-        const_vel_time = 0.0f;
-        desired_vel = max_acc * acc_time;
-    }
-    else
-    {
-        acc_time = max_vel/max_acc;
-        const_vel_time = (D/max_vel) - (max_vel/max_acc);
-        desired_vel = max_vel;
-    }
-    float min_req_time = (2 * acc_time) + const_vel_time;
-    float acc_dist = 0.5 * max_acc * acc_time * acc_time;
-    float const_vel_dist = const_vel_time * max_vel;
-    // std::cout << "acc_time: " << acc_time << std::endl;
-    // std::cout << "const_vel_time: " << const_vel_time << std::endl;
-    // std::cout << "acc_dist: " << acc_dist << std::endl;
-    // std::cout << "const_vel_dist: " << const_vel_dist << std::endl;
-    // std::cout << "min_req_time: " << min_req_time << std::endl;
-    size_t num_of_control = std::ceil(min_req_time / control_sample_time_) + 1;
-    // std::cout << "num_of_control: " << num_of_control << std::endl;
-    std::vector<float> times(num_of_control, 0.0f);
-    std::vector<float> t_array(num_of_control, 0.0f);
-    std::vector<float> joint_angles(num_of_control, 0.0f);
-    for ( size_t i = 0; i < num_of_control; i++ )
-    {
-        times[i] = control_sample_time_ * i;
-    }
-    joint_angles[0] = curr;
-    t_array[0] = 0.0f;
-    joint_angles.back() = goal;
-    t_array.back() = 1.0f;
-    float remaining_time;
-    for ( size_t i = 1; i+1 < num_of_control; i++ )
-    {
-        if ( times[i] <= acc_time )
-        {
-            // accelerate
-            joint_angles[i] = curr + (0.5f * max_acc * times[i] * times[i]);
-        }
-        else if ( times[i] <= acc_time + const_vel_time )
-        {
-            // const vel
-            remaining_time = times[i] - acc_time;
-            joint_angles[i] = curr + acc_dist + (max_vel * (remaining_time));
-        }
-        else
-        {
-            // deccelerate
-            remaining_time = times[i] - (acc_time + const_vel_time);
-            joint_angles[i] = curr + acc_dist + const_vel_dist
-                             + (desired_vel * remaining_time)
-                             - (0.5f * max_acc * remaining_time * remaining_time);
-        }
-        t_array[i] = (joint_angles[i] - curr) / D;
-    }
-    // for ( size_t i = 0; i < num_of_control; i++ )
-    // {
-    //     std::cout << times[i] << " " << joint_angles[i] << " " << t_array[i] << std::endl;
-    // }
-    // std::cout << std::endl;
-    return t_array;
-}
-
-std::vector<JointValue> JointSpaceController::calcArmTraj(const JointValue& curr,
-        const JointValue& goal, const std::vector<float>& t_array)
-{
-    std::vector<JointValue> traj(t_array.size());
-    float t;
-    for ( size_t i = 0; i < t_array.size(); i++ )
-    {
-        t = t_array[i];
-        for ( size_t j = 0; j < curr.size(); j++ )
-        {
-            traj[i][j] = ((1.0f - t) * curr[j]) + (t * goal[j]);
-        }
-        std::cout << (control_sample_time_ * i) << " " << t << " " << traj[i] << std::endl;
-    }
-    return traj;
 }
 
 void JointSpaceController::reset()

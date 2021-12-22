@@ -24,6 +24,28 @@ class Utils
                 const JointValue& joint_vel,
                 const std::vector<std::string>& joint_names);
 
+        static std::vector<float> getPascalTriangleRow(size_t n);
+
+        static JointValue getSplineCurvePoint(
+                const std::vector<JointValue>& control_points,
+                const std::vector<float>& coefficients,
+                const float t);
+
+        static JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
+                                              float time_from_start,
+                                              float control_sample_time);
+
+        static float calcMinimumRequiredTime(float curr, float goal, float max_vel,
+                                             float max_acc);
+
+        static std::vector<float> calcTrajSingleJoint(float curr, float goal,
+                                                      float max_vel, float max_acc,
+                                                      float control_sample_time);
+
+        static std::vector<JointValue> calcSplineTrajectory(
+                const std::vector<JointValue>& control_points,
+                const std::vector<float>& t_array);
+
 };
 
 #endif // UTILS_H

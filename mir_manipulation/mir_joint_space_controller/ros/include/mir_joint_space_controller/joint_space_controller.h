@@ -71,18 +71,6 @@ class JointSpaceController
         void joyCb(const sensor_msgs::Joy::ConstPtr& msg);
         void jointStatesCb(const sensor_msgs::JointState::ConstPtr& msg);
 
-        JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
-                                       float time_from_start);
-
-        float calcMinimumRequiredTime(float curr, float goal,
-                                      float max_vel, float max_acc);
-
-        std::vector<float> calcTrajSingleJoint(float curr, float goal,
-                                               float max_vel, float max_acc);
-
-        std::vector<JointValue> calcArmTraj(const JointValue& curr,
-                const JointValue& goal, const std::vector<float>& t_array);
-
         void reset();
         void pubDebugMsg();
         void pubZeroVel();
