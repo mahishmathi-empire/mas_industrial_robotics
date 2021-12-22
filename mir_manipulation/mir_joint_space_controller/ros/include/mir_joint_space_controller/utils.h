@@ -20,6 +20,14 @@ class Utils
 
         static float signedClip(float value, float max_limit, float min_limit);
 
+        static JointValue clip(const JointValue& value,
+                               const JointValue& max_limit,
+                               const JointValue& min_limit);
+
+        static JointValue signedClip(const JointValue& value,
+                                     const JointValue& max_limit,
+                                     const JointValue& min_limit);
+
         static brics_actuator::JointVelocities getJointVelocitiesFromJointValue(
                 const JointValue& joint_vel,
                 const std::vector<std::string>& joint_names);

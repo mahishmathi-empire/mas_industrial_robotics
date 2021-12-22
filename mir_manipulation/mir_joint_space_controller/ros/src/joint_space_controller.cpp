@@ -11,6 +11,7 @@ JointSpaceController::JointSpaceController():
     control_sample_time_ = 1.0f/control_rate_;
     nh_.param<float>("goal_tolerance", goal_tolerance_, 0.01f);
     nh_.param<bool>("open_loop", open_loop_, false);
+    nh_.param<float>("lookahead_time", lookahead_time_, 0.2f);
 
     active_ = false;
     goal_.fill(0.0f);
@@ -18,11 +19,11 @@ JointSpaceController::JointSpaceController():
     curr_vel_.fill(0.0f);
 
     // TODO read from config file or ros param
-    max_vel_.fill(1.0f);
-    des_vel_.fill(0.8f);
+    max_vel_.fill(1.5f);
+    des_vel_.fill(1.0f);
     min_vel_.fill(0.001f);
     max_acc_.fill(1.5f);
-    des_acc_.fill(0.7f);
+    des_acc_.fill(0.8f);
 
     // TODO read from config file or ros param
     for ( size_t i = 0; i < current_.size(); i++ )
@@ -203,12 +204,10 @@ void JointSpaceController::run(const ros::TimerEvent& event)
 
     std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
 
-    float lookahead_time = 0.2f;
-
     std::chrono::duration<float> duration_from_traj_start = current_time - traj_start_time_;
     float curr_time_from_traj_start = duration_from_traj_start.count();
     std::cout << "curr_time: " << curr_time_from_traj_start << std::endl;
-    float future_time_from_traj_start = curr_time_from_traj_start + lookahead_time;
+    float future_time_from_traj_start = curr_time_from_traj_start + lookahead_time_;
     std::cout << "future_time: " << future_time_from_traj_start << std::endl;
     JointValue target = Utils::getJointValueAtTime(
             traj_, future_time_from_traj_start, control_sample_time_);
@@ -237,23 +236,18 @@ void JointSpaceController::run(const ros::TimerEvent& event)
         }
     }
 
-    JointValue raw_vel = error * (1.0f/lookahead_time);
+    JointValue raw_vel = error * (1.0f/lookahead_time_);
     // if ( traj_exec_complete )
     // {
     //     raw_vel = raw_vel * 0.1f;
     // }
-    JointValue vel;
-    vel.fill(0.0f);
-    for ( size_t i = 0; i < error.size(); i++ )
+    JointValue raw_vel_clipped = Utils::signedClip(raw_vel, max_vel_, min_vel_);
+    JointValue req_acc = (raw_vel_clipped - curr_vel_) * control_rate_;
+    JointValue acc = Utils::clip(req_acc, max_acc_, max_acc_*-1.0f);
+    JointValue vel = curr_vel_ + (acc * control_sample_time_);
+    if ( open_loop_ )
     {
-        float raw_vel_clipped = Utils::signedClip(raw_vel[i], max_vel_[i], min_vel_[i]);
-        float req_acc = (raw_vel_clipped - curr_vel_[i]) * control_rate_;
-        float acc = Utils::clip(req_acc, max_acc_[i], -max_acc_[i]);
-        vel[i] = curr_vel_[i] + (acc * control_sample_time_);
-        if ( open_loop_ )
-        {
-            curr_vel_[i] = vel[i];
-        }
+        curr_vel_ = vel;
     }
     std::cout << "target: " << target << std::endl;
     std::cout << "err: " << error << std::endl;
@@ -285,7 +279,19 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     {
         debug_msg.data.push_back(raw_vel[i]);
     }
-    for ( size_t i = 0; i < vel.size(); i++ ) // 25 - 29
+    for ( size_t i = 0; i < raw_vel_clipped.size(); i++ ) // 25 - 29
+    {
+        debug_msg.data.push_back(raw_vel_clipped[i]);
+    }
+    for ( size_t i = 0; i < req_acc.size(); i++ ) // 30 - 24
+    {
+        debug_msg.data.push_back(req_acc[i]);
+    }
+    for ( size_t i = 0; i < acc.size(); i++ ) // 35 - 39
+    {
+        debug_msg.data.push_back(acc[i]);
+    }
+    for ( size_t i = 0; i < vel.size(); i++ ) // 40 - 44
     {
         debug_msg.data.push_back(vel[i]);
     }
@@ -294,7 +300,7 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     JointValue ideal_next_traj_point = Utils::getJointValueAtTime(
             traj_, curr_time_from_traj_start+control_sample_time_, control_sample_time_);
     JointValue ideal_vel = (ideal_next_traj_point - ideal_curr_traj_point) * control_rate_;
-    for ( size_t i = 0; i < ideal_vel.size(); i++ ) // 30 - 35
+    for ( size_t i = 0; i < ideal_vel.size(); i++ ) // 45 - 49
     {
         debug_msg.data.push_back(ideal_vel[i]);
     }
@@ -321,11 +327,7 @@ void JointSpaceController::pubDebugMsg()
     {
         debug_msg.data.push_back(current_[i]);
     }
-    for ( size_t i = 0; i < curr_vel_.size(); i++ ) // 5 - 9
-    {
-        debug_msg.data.push_back(curr_vel_[i]);
-    }
-    for ( size_t i = 0; i < 5*current_.size(); i++ ) // 10 - 34
+    for ( size_t i = 0; i < 9*current_.size(); i++ ) // 5 - 49
     {
         debug_msg.data.push_back(0.0f);
     }

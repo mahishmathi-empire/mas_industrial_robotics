@@ -38,6 +38,26 @@ float Utils::signedClip(float value, float max_limit, float min_limit)
     return sign * std::max(std::min(fabs(value), max_limit), min_limit);
 }
 
+JointValue Utils::clip(const JointValue& value, const JointValue& max_limit, const JointValue& min_limit)
+{
+    JointValue clipped_val;
+    for ( size_t i = 0; i < value.size(); i++ )
+    {
+        clipped_val[i] = Utils::clip(value[i], max_limit[i], min_limit[i]);
+    }
+    return clipped_val;
+}
+
+JointValue Utils::signedClip(const JointValue& value, const JointValue& max_limit, const JointValue& min_limit)
+{
+    JointValue clipped_val;
+    for ( size_t i = 0; i < value.size(); i++ )
+    {
+        clipped_val[i] = Utils::signedClip(value[i], max_limit[i], min_limit[i]);
+    }
+    return clipped_val;
+}
+
 brics_actuator::JointVelocities Utils::getJointVelocitiesFromJointValue(
         const JointValue& joint_vel,
         const std::vector<std::string>& joint_names)

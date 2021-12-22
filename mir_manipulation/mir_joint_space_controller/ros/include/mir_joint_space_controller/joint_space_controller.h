@@ -50,6 +50,7 @@ class JointSpaceController
         JointValue max_acc_;
         JointValue des_acc_;
         float goal_tolerance_;
+        float lookahead_time_;
         std::vector<JointValue> traj_;
         size_t traj_index_;
         std::chrono::steady_clock::time_point traj_start_time_;
