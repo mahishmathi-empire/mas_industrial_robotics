@@ -19,10 +19,12 @@ JointSpaceController::JointSpaceController():
     curr_vel_.fill(0.0f);
 
     // TODO read from config file or ros param
-    max_vel_.fill(1.5f);
+    // max_vel_.fill(1.5f);
+    max_vel_.fill(1.0f);
     des_vel_.fill(1.0f);
     min_vel_.fill(0.001f);
-    max_acc_.fill(1.5f);
+    // max_acc_.fill(1.5f);
+    max_acc_.fill(1.0f);
     des_acc_.fill(0.8f);
 
     // TODO read from config file or ros param
@@ -105,28 +107,28 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     }
 
     goal_ = named_configurations_[msg->data];
-    JointValue min_req_times;
-    float max_req_time = 0.0f;
-    size_t slowest_joint = 0;
-    for ( size_t i = 0; i < goal_.size(); i++ )
-    {
-        min_req_times[i] = Utils::calcMinimumRequiredTime(current_[i], goal_[i],
-                                                          des_vel_[i], des_acc_[i]);
-        if ( min_req_times[i] > max_req_time )
-        {
-            max_req_time = min_req_times[i];
-            slowest_joint = i;
-        }
-    }
-    std::cout << "req_time: " << max_req_time << std::endl;
-    std::cout << "slowest_joint: " << slowest_joint << std::endl;
+    // JointValue min_req_times;
+    // float max_req_time = 0.0f;
+    // size_t slowest_joint = 0;
+    // for ( size_t i = 0; i < goal_.size(); i++ )
+    // {
+    //     min_req_times[i] = Utils::calcMinimumRequiredTime(current_[i], goal_[i],
+    //                                                       des_vel_[i], des_acc_[i]);
+    //     if ( min_req_times[i] > max_req_time )
+    //     {
+    //         max_req_time = min_req_times[i];
+    //         slowest_joint = i;
+    //     }
+    // }
+    // std::cout << "req_time: " << max_req_time << std::endl;
+    // std::cout << "slowest_joint: " << slowest_joint << std::endl;
 
-    std::vector<float> t_array = Utils::calcTrajSingleJoint(
-            current_[slowest_joint], goal_[slowest_joint],
-            des_vel_[slowest_joint], des_acc_[slowest_joint], control_sample_time_);
+    // std::vector<float> t_array = Utils::calcTrajSingleJoint(
+    //         current_[slowest_joint], goal_[slowest_joint],
+    //         des_vel_[slowest_joint], des_acc_[slowest_joint], control_sample_time_);
 
     std::vector<JointValue> ctrl_pts({current_, goal_});
-    traj_ = Utils::calcSplineTrajectory(ctrl_pts, t_array);
+    traj_ = Utils::calcSplineTrajectory(ctrl_pts, 100);
     if ( traj_.size() == 0 )
     {
         std::cout << Utils::getMsgMod("warn")
@@ -136,14 +138,19 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     }
 
     /* print traj */
-    std::cout << "Time  |  Progress  |  Joint Position" << std::endl;
+    // std::cout << "Time  |  Progress  |  Joint Position" << std::endl;
+    // for ( size_t i = 0; i < traj_.size(); i++ )
+    // {
+    //     std::cout << i * control_sample_time_ << " " << t_array[i] << " " << traj_[i] << std::endl;
+    // }
     for ( size_t i = 0; i < traj_.size(); i++ )
     {
-        std::cout << i * control_sample_time_ << " " << t_array[i] << " " << traj_[i] << std::endl;
+        std::cout << traj_[i] << std::endl;
     }
 
-    pubDebugMsg();
+    // pubDebugMsg();
     traj_start_time_ = std::chrono::steady_clock::now();
+    traj_index_ = 0;
     active_ = true;
 }
 
@@ -202,18 +209,51 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     std::cout << "curr_vel: " << curr_vel_ << std::endl;
     std::cout << "goal: " << goal_ << std::endl;
 
-    std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
+    float min_dist_sq = 1e6f;
+    size_t min_dist_index = traj_index_;
+    for ( size_t i = traj_index_; i < traj_.size(); i++ )
+    {
+        float dist_sq = Utils::calcDistSq(current_, traj_[i]);
+        if ( dist_sq < min_dist_sq )
+        {
+            min_dist_sq = dist_sq;
+            min_dist_index = i;
+        }
+    }
+    std::cout << min_dist_sq << " " << min_dist_index << " " << traj_[min_dist_sq] << std::endl;
+    if ( min_dist_index > 0 && min_dist_index+1 < traj_.size() )
+    {
+        size_t min_dist_index_prev = min_dist_index - 1;
+        size_t min_dist_index_next = min_dist_index + 1;
+        if ( Utils::calcDistSq(current_, traj_[min_dist_index-1]) < Utils::calcDistSq(current_, traj_[min_dist_index+1]) )
+        {
+            min_dist_index--;
+        }
+    }
+    float t = ( min_dist_index+1 == traj_.size() )
+              ? 0.0f
+              : Utils::getProjectedPointRatioOnSegment(traj_[min_dist_index],
+                                                       traj_[min_dist_index+1],
+                                                       current_);
+    traj_index_ = min_dist_index;
 
-    std::chrono::duration<float> duration_from_traj_start = current_time - traj_start_time_;
-    float curr_time_from_traj_start = duration_from_traj_start.count();
-    std::cout << "curr_time: " << curr_time_from_traj_start << std::endl;
-    float future_time_from_traj_start = curr_time_from_traj_start + lookahead_time_;
-    std::cout << "future_time: " << future_time_from_traj_start << std::endl;
-    JointValue target = Utils::getJointValueAtTime(
-            traj_, future_time_from_traj_start, control_sample_time_);
+    size_t future_index_offset = 5;
+    float p_gain = 0.1f;
+    size_t future_traj_index = traj_index_ + future_index_offset;
+    size_t future_traj_index_next = traj_index_ + future_index_offset + 1;
+    if ( future_traj_index >= traj_.size() )
+    {
+        future_traj_index = traj_.size() - 1;
+    }
+    if ( future_traj_index_next >= traj_.size() )
+    {
+        future_traj_index_next = traj_.size() - 1;
+    }
+
+    JointValue target = (traj_[future_traj_index] * (1.0f - t)) + (traj_[future_traj_index_next] * t);
     JointValue error = target - current_;
 
-    if ( target == goal_ )
+    if ( traj_index_+1 == traj_.size() )
     {
         bool reached_goal = true;
         for ( size_t i = 0; i < error.size(); i++ )
@@ -236,14 +276,12 @@ void JointSpaceController::run(const ros::TimerEvent& event)
         }
     }
 
-    JointValue raw_vel = error * (1.0f/lookahead_time_);
-    // if ( traj_exec_complete )
-    // {
-    //     raw_vel = raw_vel * 0.1f;
-    // }
-    JointValue raw_vel_clipped = Utils::signedClip(raw_vel, max_vel_, min_vel_);
+    JointValue curr_acc;
+    curr_acc.fill(0.0f);
+    JointValue raw_vel = error * p_gain * control_rate_;
+    JointValue raw_vel_clipped = Utils::normalisedClip(curr_vel_, raw_vel, max_vel_);
     JointValue req_acc = (raw_vel_clipped - curr_vel_) * control_rate_;
-    JointValue acc = Utils::clip(req_acc, max_acc_, max_acc_*-1.0f);
+    JointValue acc = Utils::normalisedClip(curr_acc, req_acc, max_acc_);
     JointValue vel = curr_vel_ + (acc * control_sample_time_);
     if ( open_loop_ )
     {
@@ -252,6 +290,9 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     std::cout << "target: " << target << std::endl;
     std::cout << "err: " << error << std::endl;
     std::cout << "raw_vel: " << raw_vel << std::endl;
+    std::cout << "raw_vel_clipped: " << raw_vel_clipped << std::endl;
+    std::cout << "req_acc: " << req_acc << std::endl;
+    std::cout << "acc: " << acc << std::endl;
     std::cout << "vel: " << vel << std::endl;
 
     joint_vel_pub_.publish(Utils::getJointVelocitiesFromJointValue(vel, joint_names_));
@@ -295,18 +336,136 @@ void JointSpaceController::run(const ros::TimerEvent& event)
     {
         debug_msg.data.push_back(vel[i]);
     }
-    JointValue ideal_curr_traj_point = Utils::getJointValueAtTime(
-            traj_, curr_time_from_traj_start, control_sample_time_);
-    JointValue ideal_next_traj_point = Utils::getJointValueAtTime(
-            traj_, curr_time_from_traj_start+control_sample_time_, control_sample_time_);
-    JointValue ideal_vel = (ideal_next_traj_point - ideal_curr_traj_point) * control_rate_;
+    JointValue ideal_vel;
+    ideal_vel.fill(0.0f);
     for ( size_t i = 0; i < ideal_vel.size(); i++ ) // 45 - 49
     {
         debug_msg.data.push_back(ideal_vel[i]);
     }
     debug_pub_.publish(debug_msg);
-
 }
+
+// void JointSpaceController::run(const ros::TimerEvent& event)
+// {
+//     if ( !active_ )
+//     {
+//         return;
+//     }
+
+//     if ( traj_.size() == 0 )
+//     {
+//         reset();
+//         return;
+//     }
+
+//     std::cout << "current: " << current_ << std::endl;
+//     std::cout << "curr_vel: " << curr_vel_ << std::endl;
+//     std::cout << "goal: " << goal_ << std::endl;
+
+//     std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
+
+//     std::chrono::duration<float> duration_from_traj_start = current_time - traj_start_time_;
+//     float curr_time_from_traj_start = duration_from_traj_start.count();
+//     std::cout << "curr_time: " << curr_time_from_traj_start << std::endl;
+//     float future_time_from_traj_start = curr_time_from_traj_start + lookahead_time_;
+//     std::cout << "future_time: " << future_time_from_traj_start << std::endl;
+//     JointValue target = Utils::getJointValueAtTime(
+//             traj_, future_time_from_traj_start, control_sample_time_);
+//     JointValue error = target - current_;
+
+//     if ( target == goal_ )
+//     {
+//         bool reached_goal = true;
+//         for ( size_t i = 0; i < error.size(); i++ )
+//         {
+//             if ( fabs(error[i]) > goal_tolerance_ )
+//             {
+//                 reached_goal = false;
+//                 break;
+//             }
+//         }
+
+//         if ( reached_goal )
+//         {
+//             std::cout << "error: " << error << std::endl;
+//             std::cout << Utils::getMsgMod("success")
+//                       << "[JointSpaceController] REACHED GOAL"
+//                       << Utils::getMsgMod("end") << std::endl;
+//             reset();
+//             return;
+//         }
+//     }
+
+//     JointValue raw_vel = error * (1.0f/lookahead_time_);
+//     // if ( traj_exec_complete )
+//     // {
+//     //     raw_vel = raw_vel * 0.1f;
+//     // }
+//     JointValue raw_vel_clipped = Utils::signedClip(raw_vel, max_vel_, min_vel_);
+//     JointValue req_acc = (raw_vel_clipped - curr_vel_) * control_rate_;
+//     JointValue acc = Utils::clip(req_acc, max_acc_, max_acc_*-1.0f);
+//     JointValue vel = curr_vel_ + (acc * control_sample_time_);
+//     if ( open_loop_ )
+//     {
+//         curr_vel_ = vel;
+//     }
+//     std::cout << "target: " << target << std::endl;
+//     std::cout << "err: " << error << std::endl;
+//     std::cout << "raw_vel: " << raw_vel << std::endl;
+//     std::cout << "vel: " << vel << std::endl;
+
+//     joint_vel_pub_.publish(Utils::getJointVelocitiesFromJointValue(vel, joint_names_));
+//     std::cout << std::endl;
+
+//     /* fill debug msg */
+//     std_msgs::Float32MultiArray debug_msg;
+//     for ( size_t i = 0; i < current_.size(); i++ ) // 0 - 4
+//     {
+//         debug_msg.data.push_back(current_[i]);
+//     }
+//     for ( size_t i = 0; i < curr_vel_.size(); i++ ) // 5 - 9
+//     {
+//         debug_msg.data.push_back(curr_vel_[i]);
+//     }
+//     for ( size_t i = 0; i < target.size(); i++ ) // 10 - 14
+//     {
+//         debug_msg.data.push_back(target[i]);
+//     }
+//     for ( size_t i = 0; i < error.size(); i++ ) // 15 - 19
+//     {
+//         debug_msg.data.push_back(error[i]);
+//     }
+//     for ( size_t i = 0; i < raw_vel.size(); i++ ) // 20 - 24
+//     {
+//         debug_msg.data.push_back(raw_vel[i]);
+//     }
+//     for ( size_t i = 0; i < raw_vel_clipped.size(); i++ ) // 25 - 29
+//     {
+//         debug_msg.data.push_back(raw_vel_clipped[i]);
+//     }
+//     for ( size_t i = 0; i < req_acc.size(); i++ ) // 30 - 24
+//     {
+//         debug_msg.data.push_back(req_acc[i]);
+//     }
+//     for ( size_t i = 0; i < acc.size(); i++ ) // 35 - 39
+//     {
+//         debug_msg.data.push_back(acc[i]);
+//     }
+//     for ( size_t i = 0; i < vel.size(); i++ ) // 40 - 44
+//     {
+//         debug_msg.data.push_back(vel[i]);
+//     }
+//     JointValue ideal_curr_traj_point = Utils::getJointValueAtTime(
+//             traj_, curr_time_from_traj_start, control_sample_time_);
+//     JointValue ideal_next_traj_point = Utils::getJointValueAtTime(
+//             traj_, curr_time_from_traj_start+control_sample_time_, control_sample_time_);
+//     JointValue ideal_vel = (ideal_next_traj_point - ideal_curr_traj_point) * control_rate_;
+//     for ( size_t i = 0; i < ideal_vel.size(); i++ ) // 45 - 49
+//     {
+//         debug_msg.data.push_back(ideal_vel[i]);
+//     }
+//     debug_pub_.publish(debug_msg);
+// }
 
 void JointSpaceController::reset()
 {

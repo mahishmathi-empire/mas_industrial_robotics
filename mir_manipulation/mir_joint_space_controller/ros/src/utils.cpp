@@ -58,6 +58,32 @@ JointValue Utils::signedClip(const JointValue& value, const JointValue& max_limi
     return clipped_val;
 }
 
+JointValue Utils::normalisedClip(const JointValue& value, const JointValue& target, const JointValue& max_limit)
+{
+    JointValue clipped_val = target;
+    for ( size_t i = 0; i < clipped_val.size(); i++ )
+    {
+        if ( target[i] <= max_limit[i] && target[i] >= -max_limit[i] )
+        {
+            continue;
+        }
+        float clipped_value = Utils::clip(clipped_val[i], max_limit[i], -max_limit[i]);
+        float t = (clipped_value - value[i])/(target[i] - value[i]);
+        clipped_val = (value * (1.0f - t)) + (target * t);
+    }
+    return clipped_val;
+}
+
+float Utils::calcDistSq(const JointValue& jval_1, const JointValue& jval_2)
+{
+    float dist_sq = 0.0f;
+    for ( size_t i = 0; i < jval_1.size(); i++ )
+    {
+        dist_sq += pow(jval_1[i] - jval_2[i], 2);
+    }
+    return dist_sq;
+}
+
 brics_actuator::JointVelocities Utils::getJointVelocitiesFromJointValue(
         const JointValue& joint_vel,
         const std::vector<std::string>& joint_names)
@@ -109,6 +135,37 @@ JointValue Utils::getSplineCurvePoint(const std::vector<JointValue>& control_poi
         }
     }
     return curve_point;
+}
+
+std::vector<JointValue> Utils::calcSplineTrajectory(
+        const std::vector<JointValue>& control_points,
+        const std::vector<float>& t_array)
+{
+    std::vector<JointValue> traj;
+    if ( control_points.size() < 2 )
+    {
+        return traj;
+    }
+    std::vector<float> coefficients = Utils::getPascalTriangleRow(control_points.size() - 1);
+    traj.resize(t_array.size());
+    for ( size_t i = 0; i < t_array.size(); i++ )
+    {
+        traj[i] = Utils::getSplineCurvePoint(control_points, coefficients, t_array[i]);
+    }
+    return traj;
+}
+
+std::vector<JointValue> Utils::calcSplineTrajectory(
+        const std::vector<JointValue>& control_points, size_t num_of_pts)
+{
+    /* generate t_array */
+    std::vector<float> t_array(num_of_pts+1);
+    float factor = 1.0f / num_of_pts;
+    for ( size_t i = 0; i <= num_of_pts; i++ )
+    {
+        t_array[i] = i * factor;
+    }
+    return Utils::calcSplineTrajectory(control_points, t_array);
 }
 
 JointValue Utils::getJointValueAtTime(const std::vector<JointValue>& traj,
@@ -223,21 +280,20 @@ std::vector<float> Utils::calcTrajSingleJoint(float curr, float goal,
     return t_array;
 }
 
-std::vector<JointValue> Utils::calcSplineTrajectory(
-        const std::vector<JointValue>& control_points,
-        const std::vector<float>& t_array)
+float Utils::getProjectedPointRatioOnSegment(
+        const JointValue& a, const JointValue& b, const JointValue& p)
 {
-    std::vector<JointValue> traj;
-    if ( control_points.size() < 2 )
+    float length_sq = Utils::calcDistSq(a, b);
+    if ( length_sq == 0.0f )
     {
-        return traj;
+        return 0.0f;
     }
-    std::vector<float> coefficients = Utils::getPascalTriangleRow(control_points.size() - 1);
-    traj.resize(t_array.size());
-    for ( size_t i = 0; i < t_array.size(); i++ )
+    float t_sum = 0.0f;
+    for ( size_t i = 0; i < a.size(); i++ )
     {
-        traj[i] = Utils::getSplineCurvePoint(control_points, coefficients, t_array[i]);
+        t_sum += (p[i] - a[i]) * (b[i] - a[i]);
     }
-    return traj;
+    float t = t_sum/length_sq;
+    return Utils::clip(t, 1.0f, 0.0f);
 }
 

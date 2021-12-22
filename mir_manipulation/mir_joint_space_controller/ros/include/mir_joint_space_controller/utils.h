@@ -28,6 +28,12 @@ class Utils
                                      const JointValue& max_limit,
                                      const JointValue& min_limit);
 
+        static JointValue normalisedClip(const JointValue& value,
+                                         const JointValue& target,
+                                         const JointValue& max_limit);
+
+        static float calcDistSq(const JointValue& jval_1, const JointValue& jval_2);
+
         static brics_actuator::JointVelocities getJointVelocitiesFromJointValue(
                 const JointValue& joint_vel,
                 const std::vector<std::string>& joint_names);
@@ -39,6 +45,13 @@ class Utils
                 const std::vector<float>& coefficients,
                 const float t);
 
+        static std::vector<JointValue> calcSplineTrajectory(
+                const std::vector<JointValue>& control_points,
+                const std::vector<float>& t_array);
+
+        static std::vector<JointValue> calcSplineTrajectory(
+                const std::vector<JointValue>& control_points, size_t num_of_pts);
+
         static JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
                                               float time_from_start,
                                               float control_sample_time);
@@ -49,11 +62,8 @@ class Utils
         static std::vector<float> calcTrajSingleJoint(float curr, float goal,
                                                       float max_vel, float max_acc,
                                                       float control_sample_time);
-
-        static std::vector<JointValue> calcSplineTrajectory(
-                const std::vector<JointValue>& control_points,
-                const std::vector<float>& t_array);
-
+        static float getProjectedPointRatioOnSegment(
+                const JointValue& a, const JointValue& b, const JointValue& p);
 };
 
 #endif // UTILS_H
