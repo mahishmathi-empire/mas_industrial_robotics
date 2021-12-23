@@ -107,28 +107,12 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     }
 
     goal_ = named_configurations_[msg->data];
-    // JointValue min_req_times;
-    // float max_req_time = 0.0f;
-    // size_t slowest_joint = 0;
-    // for ( size_t i = 0; i < goal_.size(); i++ )
-    // {
-    //     min_req_times[i] = Utils::calcMinimumRequiredTime(current_[i], goal_[i],
-    //                                                       des_vel_[i], des_acc_[i]);
-    //     if ( min_req_times[i] > max_req_time )
-    //     {
-    //         max_req_time = min_req_times[i];
-    //         slowest_joint = i;
-    //     }
-    // }
-    // std::cout << "req_time: " << max_req_time << std::endl;
-    // std::cout << "slowest_joint: " << slowest_joint << std::endl;
-
-    // std::vector<float> t_array = Utils::calcTrajSingleJoint(
-    //         current_[slowest_joint], goal_[slowest_joint],
-    //         des_vel_[slowest_joint], des_acc_[slowest_joint], control_sample_time_);
+    JointValue intermediate = named_configurations_["elbow"];
 
     std::vector<JointValue> ctrl_pts({current_, goal_});
-    traj_ = Utils::calcSplineTrajectory(ctrl_pts, 100);
+    // std::vector<JointValue> ctrl_pts({current_, intermediate, goal_});
+    // std::vector<JointValue> ctrl_pts({current_, intermediate, intermediate, goal_});
+    traj_ = Utils::calcSplineTrajectory(ctrl_pts, 0.01f);
     if ( traj_.size() == 0 )
     {
         std::cout << Utils::getMsgMod("warn")
@@ -138,17 +122,12 @@ void JointSpaceController::namedGoalCb(const std_msgs::String::ConstPtr& msg)
     }
 
     /* print traj */
-    // std::cout << "Time  |  Progress  |  Joint Position" << std::endl;
-    // for ( size_t i = 0; i < traj_.size(); i++ )
-    // {
-    //     std::cout << i * control_sample_time_ << " " << t_array[i] << " " << traj_[i] << std::endl;
-    // }
     for ( size_t i = 0; i < traj_.size(); i++ )
     {
-        std::cout << traj_[i] << std::endl;
+        std::cout << i << " " << traj_[i] << std::endl;
     }
 
-    // pubDebugMsg();
+    pubDebugMsg();
     traj_start_time_ = std::chrono::steady_clock::now();
     traj_index_ = 0;
     active_ = true;
@@ -250,7 +229,8 @@ void JointSpaceController::run(const ros::TimerEvent& event)
         future_traj_index_next = traj_.size() - 1;
     }
 
-    JointValue target = (traj_[future_traj_index] * (1.0f - t)) + (traj_[future_traj_index_next] * t);
+    JointValue target = Utils::interpolateLinearly(
+            traj_[future_traj_index], traj_[future_traj_index_next], t);
     JointValue error = target - current_;
 
     if ( traj_index_+1 == traj_.size() )

@@ -38,6 +38,11 @@ float Utils::signedClip(float value, float max_limit, float min_limit)
     return sign * std::max(std::min(fabs(value), max_limit), min_limit);
 }
 
+JointValue Utils::interpolateLinearly(const JointValue& a, const JointValue& b, float t)
+{
+    return (a * (1.0f - t)) + (b * t);
+}
+
 JointValue Utils::clip(const JointValue& value, const JointValue& max_limit, const JointValue& min_limit)
 {
     JointValue clipped_val;
@@ -69,7 +74,7 @@ JointValue Utils::normalisedClip(const JointValue& value, const JointValue& targ
         }
         float clipped_value = Utils::clip(clipped_val[i], max_limit[i], -max_limit[i]);
         float t = (clipped_value - value[i])/(target[i] - value[i]);
-        clipped_val = (value * (1.0f - t)) + (target * t);
+        clipped_val = Utils::interpolateLinearly(value, target, t);
     }
     return clipped_val;
 }
@@ -166,6 +171,29 @@ std::vector<JointValue> Utils::calcSplineTrajectory(
         t_array[i] = i * factor;
     }
     return Utils::calcSplineTrajectory(control_points, t_array);
+}
+
+std::vector<JointValue> Utils::calcSplineTrajectory(
+        const std::vector<JointValue>& control_points, float resolution)
+{
+    JointValue total_dist;
+    for ( size_t i = 0; i+1 < control_points.size(); i++ )
+    {
+        for ( size_t j = 0; j < total_dist.size(); j++ )
+        {
+            total_dist[j] = fabs(control_points[i+1][j] - control_points[i][j]);
+        }
+    }
+    float max_dist = 0.0f;
+    for ( size_t i = 0; i < total_dist.size(); i++ )
+    {
+        if ( total_dist[i] > max_dist )
+        {
+            max_dist = total_dist[i];
+        }
+    }
+    size_t num_of_pts = std::ceil(max_dist/resolution);
+    return Utils::calcSplineTrajectory(control_points, num_of_pts);
 }
 
 JointValue Utils::getJointValueAtTime(const std::vector<JointValue>& traj,
@@ -272,11 +300,6 @@ std::vector<float> Utils::calcTrajSingleJoint(float curr, float goal,
         }
         t_array[i] = (joint_angles[i] - curr) / D;
     }
-    // for ( size_t i = 0; i < num_of_control; i++ )
-    // {
-    //     std::cout << times[i] << " " << joint_angles[i] << " " << t_array[i] << std::endl;
-    // }
-    // std::cout << std::endl;
     return t_array;
 }
 
@@ -296,4 +319,3 @@ float Utils::getProjectedPointRatioOnSegment(
     float t = t_sum/length_sq;
     return Utils::clip(t, 1.0f, 0.0f);
 }
-

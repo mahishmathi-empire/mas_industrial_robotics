@@ -20,6 +20,9 @@ class Utils
 
         static float signedClip(float value, float max_limit, float min_limit);
 
+        static JointValue interpolateLinearly(const JointValue& a,
+                                              const JointValue& b, float t);
+
         static JointValue clip(const JointValue& value,
                                const JointValue& max_limit,
                                const JointValue& min_limit);
@@ -51,6 +54,9 @@ class Utils
 
         static std::vector<JointValue> calcSplineTrajectory(
                 const std::vector<JointValue>& control_points, size_t num_of_pts);
+
+        static std::vector<JointValue> calcSplineTrajectory(
+                const std::vector<JointValue>& control_points, float resolution);
 
         static JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
                                               float time_from_start,
