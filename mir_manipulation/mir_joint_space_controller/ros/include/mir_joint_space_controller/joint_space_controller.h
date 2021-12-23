@@ -51,9 +51,11 @@ class JointSpaceController
         JointValue des_acc_;
         float goal_tolerance_;
         float lookahead_time_;
-        std::vector<JointValue> traj_;
-        size_t traj_index_;
-        std::chrono::steady_clock::time_point traj_start_time_;
+        std::vector<JointValue> path_;
+        size_t path_index_;
+        std::chrono::steady_clock::time_point path_start_time_;
+        std::vector<float> sample_times_;
+        float path_dist_weight_;
 
         std::vector<std::string> joint_names_;
 
@@ -71,6 +73,8 @@ class JointSpaceController
         void cancelCb(const std_msgs::Empty::ConstPtr& msg);
         void joyCb(const sensor_msgs::Joy::ConstPtr& msg);
         void jointStatesCb(const sensor_msgs::JointState::ConstPtr& msg);
+
+        float calcCost(const std::vector<float>& u);
 
         void reset();
         void pubDebugMsg();

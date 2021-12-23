@@ -25,6 +25,8 @@ add_library(joint_space_controller
     SHARED
         ros/src/joint_space_controller.cpp
         ros/src/utils.cpp
+        ros/src/model.cpp
+        ros/src/optimiser.cpp
 )
 target_link_libraries(joint_space_controller
     ${catkin_LIBRARIES}

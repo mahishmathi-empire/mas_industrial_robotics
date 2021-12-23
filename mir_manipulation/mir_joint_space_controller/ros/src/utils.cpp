@@ -142,7 +142,7 @@ JointValue Utils::getSplineCurvePoint(const std::vector<JointValue>& control_poi
     return curve_point;
 }
 
-std::vector<JointValue> Utils::calcSplineTrajectory(
+std::vector<JointValue> Utils::calcSplinePath(
         const std::vector<JointValue>& control_points,
         const std::vector<float>& t_array)
 {
@@ -160,7 +160,7 @@ std::vector<JointValue> Utils::calcSplineTrajectory(
     return traj;
 }
 
-std::vector<JointValue> Utils::calcSplineTrajectory(
+std::vector<JointValue> Utils::calcSplinePath(
         const std::vector<JointValue>& control_points, size_t num_of_pts)
 {
     /* generate t_array */
@@ -170,10 +170,10 @@ std::vector<JointValue> Utils::calcSplineTrajectory(
     {
         t_array[i] = i * factor;
     }
-    return Utils::calcSplineTrajectory(control_points, t_array);
+    return Utils::calcSplinePath(control_points, t_array);
 }
 
-std::vector<JointValue> Utils::calcSplineTrajectory(
+std::vector<JointValue> Utils::calcSplinePath(
         const std::vector<JointValue>& control_points, float resolution)
 {
     JointValue total_dist;
@@ -193,7 +193,7 @@ std::vector<JointValue> Utils::calcSplineTrajectory(
         }
     }
     size_t num_of_pts = std::ceil(max_dist/resolution);
-    return Utils::calcSplineTrajectory(control_points, num_of_pts);
+    return Utils::calcSplinePath(control_points, num_of_pts);
 }
 
 JointValue Utils::getJointValueAtTime(const std::vector<JointValue>& traj,
@@ -318,4 +318,44 @@ float Utils::getProjectedPointRatioOnSegment(
     }
     float t = t_sum/length_sq;
     return Utils::clip(t, 1.0f, 0.0f);
+}
+
+JointValue Utils::getProjectedPointOnSegment(
+        const JointValue& a, const JointValue& b, const JointValue& p)
+{
+    float t = Utils::getProjectedPointRatioOnSegment(a, b, p);
+    return Utils::interpolateLinearly(a, b, t);
+}
+
+float Utils::getDistSqFromPath(const JointValue& jval,
+                               const std::vector<JointValue>& joint_path,
+                               size_t& path_start_index)
+{
+    float min_dist_sq = 1e6f;
+    size_t min_dist_index = path_start_index;
+    for ( size_t i = path_start_index; i < joint_path.size(); i++ )
+    {
+        float dist_sq = Utils::calcDistSq(jval, joint_path[i]);
+        if ( dist_sq > min_dist_sq )
+        {
+            break;
+        }
+        if ( dist_sq < min_dist_sq )
+        {
+            min_dist_sq = dist_sq;
+            min_dist_index = i;
+        }
+    }
+    path_start_index = min_dist_index;
+    // std::cout << min_dist_sq << " " << min_dist_index << " " << joint_path[min_dist_index] << std::endl;
+    if ( min_dist_index+1 < joint_path.size() )
+    {
+        JointValue proj_jval = Utils::getProjectedPointOnSegment(
+                joint_path[min_dist_index], joint_path[min_dist_index+1], jval);
+        return Utils::calcDistSq(jval, proj_jval);
+    }
+    else
+    {
+        return min_dist_sq;
+    }
 }

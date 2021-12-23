@@ -48,14 +48,14 @@ class Utils
                 const std::vector<float>& coefficients,
                 const float t);
 
-        static std::vector<JointValue> calcSplineTrajectory(
+        static std::vector<JointValue> calcSplinePath(
                 const std::vector<JointValue>& control_points,
                 const std::vector<float>& t_array);
 
-        static std::vector<JointValue> calcSplineTrajectory(
+        static std::vector<JointValue> calcSplinePath(
                 const std::vector<JointValue>& control_points, size_t num_of_pts);
 
-        static std::vector<JointValue> calcSplineTrajectory(
+        static std::vector<JointValue> calcSplinePath(
                 const std::vector<JointValue>& control_points, float resolution);
 
         static JointValue getJointValueAtTime(const std::vector<JointValue>& traj,
@@ -70,6 +70,13 @@ class Utils
                                                       float control_sample_time);
         static float getProjectedPointRatioOnSegment(
                 const JointValue& a, const JointValue& b, const JointValue& p);
+
+        static JointValue getProjectedPointOnSegment(
+                const JointValue& a, const JointValue& b, const JointValue& p);
+
+        static float getDistSqFromPath(const JointValue& jval,
+                                       const std::vector<JointValue>& joint_path,
+                                       size_t& path_start_index);
 };
 
 #endif // UTILS_H

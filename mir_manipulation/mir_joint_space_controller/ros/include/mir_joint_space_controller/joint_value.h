@@ -2,6 +2,9 @@
 #define JOINT_VALUE_H
 
 #include <array>
+#include <iostream>
+#include <string>
+#include <math.h>
 
 using JointValue = std::array<float, 5>;
 
