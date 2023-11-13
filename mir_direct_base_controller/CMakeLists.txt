@@ -18,7 +18,13 @@ find_package(geometry_msgs REQUIRED)
 
 add_executable(direct_base_controller 
   src/main.cpp
+  src/component_wise_pose_error_calculator.cpp
 )
+
+target_include_directories(direct_base_controller PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
 ament_target_dependencies(direct_base_controller 
 rclcpp 
 geometry_msgs
