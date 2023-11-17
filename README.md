@@ -1,4 +1,4 @@
-# mas_industrial_robotics - humble/bringup
+# mas_industrial_robotics - rolling
 
 The branch contains the necessary packages to bringup the robot with driver controllers.
 
@@ -20,11 +20,11 @@ The branch contains the necessary packages to bringup the robot with driver cont
 mkdir -p ~/mir/src
 ```
 
-- Clone the humble/bringup branch.
+- Clone the rolling branch.
 ```bash
 cd ~/mir/src
 
-git clone -b humble https://github.com/mas_industrial_robotics.git
+git clone -b rolling https://github.com/mas_industrial_robotics.git
 ```
 
 - Clone the dependency packages

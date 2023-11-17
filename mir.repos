@@ -3,10 +3,6 @@ repositories:
     type: git
     url: https://github.com/mas-group/brics_actuator
     version: ros2
-  mas_industrial_robotics:
-    type: git
-    url: https://github.com/vamsikalagaturu/mas_industrial_robotics.git
-    version: humble/bringup
   youbot_description:
     type: git
     url: https://github.com/mas-group/youbot_description.git
