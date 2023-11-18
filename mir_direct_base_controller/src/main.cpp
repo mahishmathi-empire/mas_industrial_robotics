@@ -1,6 +1,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "component_wise_pose_error_calculator.hpp"
+
+
 using std::placeholders::_1;
 using namespace std::chrono_literals;
 
@@ -21,12 +24,26 @@ class DirectBaseController : public rclcpp::Node
   private:
     void topic_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg) const
     {
-      
+
+   
+
       auto message = geometry_msgs::msg::Twist();
       RCLCPP_INFO(this->get_logger(), "I heard: '%f %f'", msg->pose.position.x, msg->pose.position.y);
 
+      auto origin_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+      origin_pose->header.frame_id = "odom"; 
+      origin_pose->pose.orientation.w = 1.0;
+      ComponentWiseCartesianDifference error; 
+      bool success = get_component_wise_pose_error(origin_pose, msg, error);
+      RCLCPP_INFO(this->get_logger(), "Error found: %f", error.linear_x);
+      
+
+      message.linear.x = 0.1; // set the linear x value
+
       RCLCPP_INFO(this->get_logger(), "Publishing: '%f'", message.linear.x);
+
       publisher_->publish(message);
+
 
       
     }
