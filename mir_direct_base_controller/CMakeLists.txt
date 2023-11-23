@@ -20,6 +20,8 @@ find_package(tf2 REQUIRED)
 add_executable(direct_base_controller 
   src/main.cpp
   src/component_wise_pose_error_calculator.cpp
+  src/twistsynchronizer.cpp
+  src/twist_synchronizer_utils.cpp
   src/twist_limiter.cpp
   src/twist_controller.cpp
   src/component_wise_pose_error_monitor.cpp
