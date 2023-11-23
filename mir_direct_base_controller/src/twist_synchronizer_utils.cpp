@@ -1,9 +1,6 @@
-// #include <iostream>
-// #include <cmath>
-// #include <cassert>
 #include "twist_synchronizer_utils.hpp"
 // Function to calculate the sign of a number
-// template <typename T>
+
 int sign(double val) {
     if(val > 0)
     {
