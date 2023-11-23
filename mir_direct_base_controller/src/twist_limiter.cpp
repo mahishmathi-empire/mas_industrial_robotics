@@ -1,8 +1,9 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include "twist_limiter.hpp"
 
-double limit_value(double value,double  limit){
-    double limited_value=0;
+double limit_value(double value, double limit)
+{
+    double limited_value = 0;
     if (value > limit)
         limited_value = limit;
     else if (value < -limit)
@@ -12,7 +13,7 @@ double limit_value(double value,double  limit){
     return limited_value;
 }
 
-geometry_msgs::msg::Twist get_limited_twist(const geometry_msgs::msg::Twist & twist, const LimiterParameters & lp )
+geometry_msgs::msg::Twist get_limited_twist(const geometry_msgs::msg::Twist &twist, const LimiterParameters &lp)
 {
     geometry_msgs::msg::Twist limited_twist;
     limited_twist.linear.x = limit_value(twist.linear.x, lp.max_velocity_x);
