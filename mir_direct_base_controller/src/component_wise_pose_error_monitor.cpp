@@ -1,3 +1,4 @@
+
 #include "component_wise_pose_error_monitor.hpp"
 
 ComponentWisePoseErrorMonitor::ComponentWisePoseErrorMonitor()
@@ -17,18 +18,18 @@ void ComponentWisePoseErrorMonitor::setParameters(double threshold_linear_x, dou
     this->threshold_angular_z = threshold_angular_z;
 }
 
-bool ComponentWisePoseErrorMonitor::isComponentWisePoseErrorWithinThreshold(const mcr_manipulation_msgs::ComponentWisePoseError& pose_error)
+bool ComponentWisePoseErrorMonitor::isComponentWisePoseErrorWithinThreshold(const ComponentWiseCartesianDifference & pose_error)
 {
-    feedback.is_linear_x_within_tolerance = std::abs(pose_error.linear.x) < threshold_linear_x;
-    feedback.is_linear_y_within_tolerance = std::abs(pose_error.linear.y) < threshold_linear_y;
-    feedback.is_linear_z_within_tolerance = std::abs(pose_error.linear.z) < threshold_linear_z;
-    feedback.is_angular_x_within_tolerance = std::abs(pose_error.angular.x) < threshold_angular_x;
-    feedback.is_angular_y_within_tolerance = std::abs(pose_error.angular.y) < threshold_angular_y;
-    feedback.is_angular_z_within_tolerance = std::abs(pose_error.angular.z) < threshold_angular_z;
-    return (feedback.is_linear_x_within_tolerance &&
-            feedback.is_linear_y_within_tolerance &&
-            feedback.is_linear_z_within_tolerance &&
-            feedback.is_angular_x_within_tolerance &&
-            feedback.is_angular_y_within_tolerance &&
-            feedback.is_angular_z_within_tolerance);
+    bool is_linear_x_within_tolerance = std::abs(pose_error.linear_x) < threshold_linear_x;
+    bool is_linear_y_within_tolerance = std::abs(pose_error.linear_y) < threshold_linear_y;
+    bool is_linear_z_within_tolerance = std::abs(pose_error.linear_z) < threshold_linear_z;
+    bool is_angular_x_within_tolerance = std::abs(pose_error.angular_x) < threshold_angular_x;
+    bool is_angular_y_within_tolerance = std::abs(pose_error.angular_y) < threshold_angular_y;
+    bool is_angular_z_within_tolerance = std::abs(pose_error.angular_z) < threshold_angular_z;
+    return (is_linear_x_within_tolerance &&
+            is_linear_y_within_tolerance &&
+            is_linear_z_within_tolerance &&
+            is_angular_x_within_tolerance &&
+            is_angular_y_within_tolerance &&
+            is_angular_z_within_tolerance);
 }

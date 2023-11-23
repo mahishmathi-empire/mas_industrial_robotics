@@ -19,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 add_executable(direct_base_controller 
   src/main.cpp
   src/component_wise_pose_error_calculator.cpp
+  src/component_wise_pose_error_monitor.cpp
 )
 
 target_include_directories(direct_base_controller PUBLIC
