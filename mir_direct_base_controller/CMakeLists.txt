@@ -14,6 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 
 
 add_executable(direct_base_controller 
@@ -28,6 +29,7 @@ target_include_directories(direct_base_controller PUBLIC
 ament_target_dependencies(direct_base_controller 
 rclcpp 
 geometry_msgs
+tf2
 )
 
 install(TARGETS
