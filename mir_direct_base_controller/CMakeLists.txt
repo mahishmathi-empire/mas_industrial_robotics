@@ -22,6 +22,8 @@ add_executable(direct_base_controller
   src/component_wise_pose_error_calculator.cpp
   src/twistsynchronizer.cpp
   src/twist_synchronizer_utils.cpp
+  src/twist_controller.cpp
+  src/component_wise_pose_error_monitor.cpp
 )
 
 target_include_directories(direct_base_controller PUBLIC
