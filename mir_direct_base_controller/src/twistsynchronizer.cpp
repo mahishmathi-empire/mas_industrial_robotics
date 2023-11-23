@@ -48,4 +48,3 @@ geometry_msgs::msg::Twist TwistSynchronizer::synchronizeTwist(const geometry_msg
 
     return synchronizedTwist;
 }
-
