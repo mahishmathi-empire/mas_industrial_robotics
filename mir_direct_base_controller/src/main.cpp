@@ -2,6 +2,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "component_wise_pose_error_calculator.hpp"
+#include "component_wise_pose_error_monitor.hpp"
 
 
 using std::placeholders::_1;
@@ -33,9 +34,14 @@ class DirectBaseController : public rclcpp::Node
       auto origin_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
       origin_pose->header.frame_id = "odom"; 
       origin_pose->pose.orientation.w = 1.0;
-      ComponentWiseCartesianDifference error; 
+      ComponentWiseCartesianDifference error;
       bool success = get_component_wise_pose_error(origin_pose, msg, error);
       RCLCPP_INFO(this->get_logger(), "Error found: %f", error.linear_x);
+      ComponentWisePoseErrorMonitor monitor;
+      monitor.setParameters(0.1, 0.1, 0.1, 0.1, 0.1, 0.1);
+      bool is_within_threshold = monitor.isComponentWisePoseErrorWithinThreshold(error);
+      RCLCPP_INFO(this->get_logger(), "Is within threshold: %d", is_within_threshold);
+
       
 
       message.linear.x = 0.1; // set the linear x value
