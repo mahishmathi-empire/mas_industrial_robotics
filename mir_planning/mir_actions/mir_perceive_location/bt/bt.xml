@@ -1,0 +1,8 @@
+<root BTCPP_format="4" >
+  <BehaviorTree ID="ST_Test" >
+    <Sequence>
+      <Script code="msg='mememe'" />
+      <Action ID="PerceiveLocationAction" name="sub_action_1"  message="{msg}"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

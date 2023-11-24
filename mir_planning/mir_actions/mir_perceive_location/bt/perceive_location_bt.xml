@@ -1,0 +1,11 @@
+<root BTCPP_format="4" >
+
+  <include path="bt.xml"/>
+
+  <BehaviorTree ID="MainTree">
+      <Sequence name="root">
+          <Action ID="PerceiveLocationAction" name="action_1" message="m1"/>
+          <!-- <SubTree ID="ST_Test" /> -->
+      </Sequence>
+  </BehaviorTree>
+</root>
