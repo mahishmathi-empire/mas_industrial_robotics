@@ -36,6 +36,7 @@ set(perception_msg_files
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${manipulation_msg_files}
   ${perception_msg_files}
+  "mir_perception/action/ObjectDetection.action"
   DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs
 )
 

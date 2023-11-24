@@ -27,6 +27,11 @@ import torch
 # Node, State and Publisher are aliases for LifecycleNode, LifecycleState and LifecyclePublisher
 # respectively.
 # In case of ambiguity, the more explicit names can be imported.
+from rclpy.action import ActionServer
+from rclpy.node import Node
+
+from mir_interfaces.action import ObjectDetection
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import Publisher
@@ -36,7 +41,7 @@ from rclpy.timer import Timer
 from std_msgs.msg import ColorRGBA, String
 from sensor_msgs.msg import Image, RegionOfInterest, PointCloud2, PointField
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from mir_interfaces.msg import ImageList, Object, ObjectList
+from mir_interfaces.msg import ImageList, Object, ObjectList, Cavity
 from visualization_msgs.msg import Marker
 from ament_index_python.packages import get_package_share_directory 
 import rclpy.qos as qos
@@ -50,6 +55,7 @@ import tf2_py as tf2
 from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 import tf_transformations as tr
 from scipy.spatial.transform import Rotation as R
+import time
 
 class PPT_LifecycleTalker(Node):
 
@@ -66,10 +72,12 @@ class PPT_LifecycleTalker(Node):
         self.sub_img = None
         self.sub_point_cloud = None
         self.ts = None
-
         self.tf_buffer = None
         
         self.model = None
+        self._action_server = None
+        self.tf_listener = None
+        self.goal_handle = None
 
         super().__init__(node_name, **kwargs)
 
@@ -88,7 +96,7 @@ class PPT_LifecycleTalker(Node):
         """
         self.get_logger().info('on_configure() is called.')
         
-        self.object_name = "M20_H"
+        self.object_name = "S40_40_H"
         self.cvbridge = CvBridge()
         self.debug = True
 
@@ -104,6 +112,12 @@ class PPT_LifecycleTalker(Node):
         # Load model
         self.model = YOLO(self.weights)    
         self.tf_buffer = tf2_ros.Buffer(cache_time=rclpy.duration.Duration(seconds=10))    
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+
+        self._action_server = ActionServer(self, ObjectDetection, 'ppt_detection', 
+                                           self.execute_callback, 
+                                           goal_callback=self.goal_callback,
+                                           handle_accepted_callback=self.handle_accepted_callback)
         
         return TransitionCallbackReturn.SUCCESS
 
@@ -118,14 +132,12 @@ class PPT_LifecycleTalker(Node):
 
         # Subscribe to image topic
         self.sub_img = message_filters.Subscriber(self, Image, "/camera/color/image_raw", qos_profile=qos.qos_profile_sensor_data)
-        self.d = self.create_subscription(Image, "/camera/color/image_raw", self.run2, qos_profile=qos.qos_profile_sensor_data)
 
         # subscribe to point cloud topic
         self.sub_point_cloud = message_filters.Subscriber(self, PointCloud2, "/camera/depth/color/points", qos_profile=qos.qos_profile_sensor_data)
         
         # synchronize image and point cloud
         self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_img, self.sub_point_cloud], queue_size=10, slop=0.1)
-        self.ts.registerCallback(self.run2)
 
         # The default LifecycleNode callback is the one transitioning
         # LifecyclePublisher entities from inactive to enabled.
@@ -179,6 +191,24 @@ class PPT_LifecycleTalker(Node):
 
         return TransitionCallbackReturn.SUCCESS
     
+    def execute_callback(self, goal_handle):
+        result = ObjectDetection.Result()
+        goal_handle.succeed()
+        result.result = True
+        return result
+    
+    def goal_callback(self, goal_request):
+        """Accept or reject a client request to begin an action."""
+        self.get_logger().info('Received goal request')
+        return GoalResponse.ACCEPT
+    
+    def handle_accepted_callback(self, goal_handle):
+        """Provide a handle to an accepted goal."""
+        self.get_logger().info('Deferring execution...')
+        self.goal_handle = goal_handle
+        self.ts.registerCallback(self.run2)
+    
+    
     def yolo_detect(self, cv_img):
         predictions = self.model.predict(source=cv_img,
                                             conf=0.8, iou=0.45,
@@ -214,7 +244,6 @@ class PPT_LifecycleTalker(Node):
         # eigenvalues = pca.explained_variance_
         eigenvectors = pca.components_
         # print("eigenvalues: ", eigenvalues, "\neigenvectors: \n", eigenvectors)
-
         # Calculate the pose using PCA results
         pose = self.calculate_pose(point_cloud, centroid, eigenvectors)
         return pose
@@ -238,15 +267,12 @@ class PPT_LifecycleTalker(Node):
         crp_pc = point_cloud2.create_cloud_xyz32(point_cloud.header, crp_cloud)
         
         try:
-            trans = self.tf_buffer.lookup_transform("base_link", point_cloud.header.frame_id, point_cloud.header.stamp, rclpy.duration.Duration(seconds=10))
-        except tf2.LookupException as ex:
-            self.get_logger().warn(str(point_cloud.header.stamp))
-            self.get_logger().warn(ex)
+            trans = self.tf_buffer.lookup_transform("map", point_cloud.header.frame_id, rclpy.time.Time())   
+        except tf2_ros.TransformException as ex:
+            self.get_logger().info(
+                f'Could not transform {"base_link"} to {point_cloud.header.frame_id}: {ex}')
             return
-        except tf2.ExtrapolationException as ex:
-            self.get_logger().warn(str(point_cloud.header.stamp))
-            self.get_logger().warn(ex)
-            return
+        
         cropped_cloud_wrt_base_link = do_transform_cloud(crp_pc, trans)
 
         cropped_cloud = list(point_cloud2.read_points(cropped_cloud_wrt_base_link, skip_nans=False, field_names=("x", "y", "z")))
@@ -286,9 +312,9 @@ class PPT_LifecycleTalker(Node):
         pose.header.frame_id = "base_link"
 
         # Set the position of the object
-        pose.pose.position.x = centroid[0]
-        pose.pose.position.y = centroid[1]
-        pose.pose.position.z = centroid[2]
+        pose.pose.position.x = float(centroid[0])
+        pose.pose.position.y = float(centroid[1])
+        pose.pose.position.z = float(centroid[2])
 
         # Swap largest and second largest eigenvectors
         # eigenvectors[:, [0, 2]] = eigenvectors[:, [2, 0]]
@@ -312,14 +338,12 @@ class PPT_LifecycleTalker(Node):
         
         roll, pitch, yaw = tr.euler_from_quaternion(quaternion)
         orientation = tr.quaternion_from_euler(0, 0, yaw)
-        # print("pose = ", pose.pose.orientation)
-        pose.pose.orientation.x = orientation[0]
-        pose.pose.orientation.y = orientation[1]
-        pose.pose.orientation.z = orientation[2]
-        pose.pose.orientation.w = orientation[3]
 
-        self.pub_pose.publish(pose)
-
+        pose.pose.orientation.x = float(orientation[0])
+        pose.pose.orientation.y = float(orientation[1])
+        pose.pose.orientation.z = float(orientation[2])
+        pose.pose.orientation.w = float(orientation[3])
+        
         return pose
     
     def run2(self, image, pointcloud: PointCloud2):
@@ -327,7 +351,7 @@ class PPT_LifecycleTalker(Node):
         image: image data of current frame with Image data type
         pointcloud: pointcloud data of current frame with PointCloud2 data type
         """
-        pointcloud.data
+        print("entered run2")
         if image:
             try:
                 cv_img = self.cvbridge.imgmsg_to_cv2(image, "bgr8")
@@ -337,8 +361,10 @@ class PPT_LifecycleTalker(Node):
                 print("labels: ", labels) 
                 
                 for bbox, prob, label in zip(bboxes, probs, labels):
+                    # TODO: Do this for all cavities. Use message type Cavity.
                     if label == self.object_name:
                         cavity_pose = self.get_cavity_pose(pointcloud, bbox)
+                        self.pub_pose.publish(cavity_pose)
                     else:
                         continue
                 if self.debug:
@@ -346,6 +372,10 @@ class PPT_LifecycleTalker(Node):
                     debug_img = predictions[0].plot()
                     # publish bbox and label
                     self.publish_debug_img(debug_img)
+                
+                self.goal_handle.execute()
+                self.destroy_subscription(self.sub_img.sub)
+                self.destroy_subscription(self.sub_point_cloud.sub)
 
             except CvBridgeError as e:
                 self.get_logger().error(e)
