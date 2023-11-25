@@ -25,6 +25,7 @@ add_executable(direct_base_controller
   src/twist_limiter.cpp
   src/twist_controller.cpp
   src/component_wise_pose_error_monitor.cpp
+  src/direct_base_controller_coordinator.cpp
 )
 
 target_include_directories(direct_base_controller PUBLIC
