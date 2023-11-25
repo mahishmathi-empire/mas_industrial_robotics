@@ -32,6 +32,9 @@ add_library(world_model SHARED
   src/world_model.cpp
 )
 
+target_compile_definitions(world_model
+            PRIVATE "COMPOSITION_BUILDING_DLL")
+
 ament_target_dependencies(world_model
   mir_interfaces 
 )
