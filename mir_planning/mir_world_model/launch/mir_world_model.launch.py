@@ -41,12 +41,10 @@ def generate_launch_description():
                 package="mir_world_model",
                 plugin="WorldModelNode",
                 name=node_name,
-                parameters=[
-                    {"arena_info": arena_info},
-                ],
+                parameters=[arena_info]
             )
         ],
-        parameters=[],
+        # parameters=[],
         output="screen",
         # prefix=['xterm -e gdb -ex run --args'],
     )

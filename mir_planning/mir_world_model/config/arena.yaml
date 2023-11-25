@@ -1,9 +1,11 @@
-mir_world_model:
-  arena:
+/world_model_node:
+  ros__parameters:
     workstations:
-      - name: WS00
+      ws_1:
+        name: WS00
         type: Normal
         height: 0.0
-      - name: SH01
+      ws_2:
+        name: SH01
         type: Shelf
         height: 0.0
