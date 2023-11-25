@@ -1,0 +1,9 @@
+mir_world_model:
+  arena:
+    workstations:
+      - name: WS00
+        type: Normal
+        height: 0.0
+      - name: SH01
+        type: Shelf
+        height: 0.0
