@@ -64,7 +64,9 @@ install(TARGETS
 
   EXPORT export_world_model_node
 
-  DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(DIRECTORY

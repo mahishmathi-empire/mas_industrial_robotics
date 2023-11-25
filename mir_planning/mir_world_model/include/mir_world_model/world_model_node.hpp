@@ -11,7 +11,7 @@
 class WorldModelNode : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  WorldModelNode(const rclcpp::NodeOptions& options);
+  explicit WorldModelNode(const rclcpp::NodeOptions& options);
 
   virtual ~WorldModelNode();
 

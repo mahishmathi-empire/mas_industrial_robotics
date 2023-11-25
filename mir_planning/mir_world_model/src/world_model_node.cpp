@@ -7,11 +7,11 @@ WorldModelNode::WorldModelNode(const rclcpp::NodeOptions& options)
 
   // print the parameters from the yaml file passed to the node
   RCLCPP_INFO(get_logger(), "WorldModelNode parameters:");
-  auto parameter_names = rclcpp_lifecycle::LifecycleNode::list_parameters({}, 0).names;
-  for (auto& parameter_name : parameter_names)
-  {
-    RCLCPP_INFO(get_logger(), "  %s: %s", parameter_name.c_str(), get_parameter(parameter_name).as_string().c_str());
-  }
+  // auto parameter_names = rclcpp_lifecycle::LifecycleNode::list_parameters({}, 0).names;
+  // for (auto& parameter_name : parameter_names)
+  // {
+  //   RCLCPP_INFO(get_logger(), "  %s: %s", parameter_name.c_str(), get_parameter(parameter_name).as_string().c_str());
+  // }
 }
 
 WorldModelNode::~WorldModelNode()
