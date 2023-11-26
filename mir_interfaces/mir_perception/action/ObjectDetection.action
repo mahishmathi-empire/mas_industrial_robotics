@@ -1,4 +1,6 @@
 string obj_category
+string obj_name ""
+string workstation ""
 ---
 bool result
 ---
