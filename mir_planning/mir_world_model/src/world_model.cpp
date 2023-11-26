@@ -14,80 +14,93 @@ WorldModel::WorldModel()
 WorldModel::~WorldModel() {}
 
 // ============================ Methods ============================
-// -------------------------  Workstations ----------------------------
-void
-WorldModel::addWorkstation(std::string name, std::string type, double height)
+void 
+WorldModel::addWorkstation(
+  std::string name, 
+  std::string type, 
+  double height)
 {
-  WorkstationType workstation_type = workstation_type_map[type];
-
   Workstation workstation;
   workstation.name = name;
-  workstation.type = workstation_type;
+  workstation.type = workstation_type_map[type];
   workstation.height = height;
-  workstations_.insert(std::pair<std::string, Workstation>(name, workstation));
+  workstations_[name] = workstation; // add workstation to map
 }
 
-void
-WorldModel::getWorkstation(std::string name, Workstation& workstation)
+void 
+WorldModel::removeWorkstation(
+  std::string name)
 {
-  workstation = workstations_[name];
+  workstations_.erase(name);
 }
 
-void
-WorldModel::getWorkstations(std::vector<Workstation>& workstations)
-{
-  for (auto& workstation : workstations_) {
-    workstations.push_back(workstation.second);
-  }
-}
-
-void
-WorldModel::addAtworkObjectToWorkstation(
+void 
+WorldModel::addObjectToWorkstation(
   std::string workstation_name,
   std::string object_name,
   int object_id,
   geometry_msgs::msg::PoseStamped object_pose)
 {
-  // create object
-  AtworkObject object;
-  object.name = object_name;
-  object.id = object_id;
-  object.pose = object_pose;
-  object.added_time = std::time(nullptr);
-  object.workstation_name = workstation_name;
-
-  // add object to list of objects
-  atwork_objects_.insert(
-    std::pair<std::string, AtworkObject>(std::to_string(object_id), object));
-
-  // link object to workstation
+  AtworkObject atwork_object;
+  atwork_object.name = object_name;
+  atwork_object.id = object_id;
+  atwork_object.pose = object_pose;
+  atwork_object.workstation_name = workstation_name;
+  atwork_object.added_time = std::time(nullptr); // TODO: check if this is in required format
   workstations_[workstation_name].object_ids.push_back(object_id);
+  atwork_objects_[object_id] = atwork_object;
 }
 
-void
-WorldModel::getWorkstationObjects(std::string workstation_name,
-                                  std::vector<AtworkObject>& objects)
-{
-  for (auto& object_id : workstations_[workstation_name].object_ids) {
-    objects.push_back(atwork_objects_[std::to_string(object_id)]);
+void 
+WorldModel::removeObjectFromWorkstation(
+  std::string workstation_name,
+  int object_id)
+{ 
+  // remove object from workstation
+  std::vector<int>::iterator it = std::find(
+    workstations_[workstation_name].object_ids.begin(),
+    workstations_[workstation_name].object_ids.end(),
+    object_id);
+  if (it != workstations_[workstation_name].object_ids.end())
+  {
+    workstations_[workstation_name].object_ids.erase(it);
   }
 }
 
-void
-WorldModel::getWorkstationObject(std::string workstation_name,
-                                 std::string object_name,
-                                 AtworkObject& object)
+std::vector<int> 
+WorldModel::getWorkstationObjectIds(
+  std::string workstation_name)
 {
-  for (auto& object_id : workstations_[workstation_name].object_ids) {
-    if (atwork_objects_[std::to_string(object_id)].name == object_name) {
-      object = atwork_objects_[std::to_string(object_id)];
-      return;
-    }
-  }
+  return workstations_[workstation_name].object_ids;
 }
 
-void
-WorldModel::getObjectById(int object_id, AtworkObject& atwork_object)
+std::vector<std::string> 
+WorldModel::getWorkstationObjects(
+  std::string workstation_name)
 {
-  atwork_object = atwork_objects_[std::to_string(object_id)];
+  std::vector<std::string> objects;
+  for (int id : workstations_[workstation_name].object_ids)
+  {
+    objects.push_back(atwork_objects_[id].name);
+  }
+  return objects;
 }
+
+std::vector<Workstation> 
+WorldModel::getAllWorkstations()
+{
+  std::vector<Workstation> workstations;
+  for (auto const& workstation : workstations_)
+  {
+    workstations.push_back(workstation.second);
+  }
+  return workstations;
+}
+
+int 
+WorldModel::getWorkstationHeight(
+  std::string workstation_name)
+{
+  return workstations_[workstation_name].height;
+}
+
