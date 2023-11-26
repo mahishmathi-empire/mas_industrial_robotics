@@ -17,6 +17,7 @@ from ament_index_python.packages import (
 )
 from launch.event_handlers.on_shutdown import OnShutdown
 
+
 import lifecycle_msgs.msg
 import os
 
@@ -41,6 +42,7 @@ def generate_launch_description():
                 package="mir_world_model",
                 plugin="WorldModelNode",
                 name=node_name,
+                namespace="",
                 parameters=[arena_info]
             )
         ],

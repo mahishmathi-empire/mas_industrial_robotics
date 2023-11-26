@@ -32,9 +32,6 @@ add_library(world_model SHARED
   src/world_model.cpp
 )
 
-target_compile_definitions(world_model
-            PRIVATE "COMPOSITION_BUILDING_DLL")
-
 ament_target_dependencies(world_model
   mir_interfaces 
 )
@@ -57,7 +54,11 @@ target_link_libraries(world_model_node
   world_model
 )
 
+target_compile_definitions(world_model_node
+            PRIVATE "COMPOSITION_BUILDING_DLL")
+
 rclcpp_components_register_nodes(world_model_node "WorldModelNode")
+set(node_plugins "${node_plugins}WorldModelNode;$<TARGET_FILE:world_model_node>\n")
 
 install(TARGETS
   world_model_node

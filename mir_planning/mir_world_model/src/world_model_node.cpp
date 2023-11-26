@@ -5,13 +5,14 @@ WorldModelNode::WorldModelNode(const rclcpp::NodeOptions& options)
 {
   RCLCPP_INFO(get_logger(), "WorldModelNode created");
 
-  // print the parameters from the yaml file passed to the node
-  RCLCPP_INFO(get_logger(), "WorldModelNode parameters:");
-  // auto parameter_names = rclcpp_lifecycle::LifecycleNode::list_parameters({}, 0).names;
-  // for (auto& parameter_name : parameter_names)
-  // {
-  //   RCLCPP_INFO(get_logger(), "  %s: %s", parameter_name.c_str(), get_parameter(parameter_name).as_string().c_str());
-  // }
+  // get node parameter overrides
+  auto overrides = this->get_node_options().parameter_overrides();
+
+  // declare overridable parameters
+  for (auto& override : overrides) {
+      declare_parameter(override.get_name(), override.get_parameter_value());
+  }
+
 }
 
 WorldModelNode::~WorldModelNode()
