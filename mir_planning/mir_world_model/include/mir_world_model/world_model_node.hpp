@@ -15,15 +15,6 @@ public:
 
   virtual ~WorldModelNode();
 
-  // default node options
-  static rclcpp::NodeOptions default_options() {
-    rclcpp::NodeOptions options;
-    options.use_intra_process_comms(true);
-    options.allow_undeclared_parameters(true);
-    options.automatically_declare_parameters_from_overrides(true);
-    return options;
-  }
-
   // Transition callback for state configuring
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_configure(const rclcpp_lifecycle::State&);
@@ -43,4 +34,8 @@ public:
   // Transition callback for state shutting down
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_shutdown(const rclcpp_lifecycle::State& state);
+
+private:
+  // ============================ Members ============================
+  std::shared_ptr<WorldModel> world_model_;
 };

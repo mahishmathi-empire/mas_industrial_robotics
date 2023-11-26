@@ -28,16 +28,9 @@ include_directories(
   ${mir_interfaces_INCLUDE_DIRS}
 )
 
-add_library(world_model SHARED
-  src/world_model.cpp
-)
-
-ament_target_dependencies(world_model
-  mir_interfaces 
-)
-
 add_library(world_model_node SHARED
   src/world_model_node.cpp
+  src/world_model.cpp
 )
 
 ament_target_dependencies(world_model_node
@@ -51,7 +44,13 @@ ament_target_dependencies(world_model_node
 )
 
 target_link_libraries(world_model_node
-  world_model
+  ${rclcpp_LIBRARIES}
+  ${rclcpp_lifecycle_LIBRARIES}
+  ${rclcpp_components_LIBRARIES}
+  ${std_msgs_LIBRARIES}
+  ${geometry_msgs_LIBRARIES}
+  ${lifecycle_msgs_LIBRARIES}
+  ${mir_interfaces_LIBRARIES}
 )
 
 target_compile_definitions(world_model_node
