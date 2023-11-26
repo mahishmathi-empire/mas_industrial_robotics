@@ -6,6 +6,8 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include "rclcpp_components/register_node_macro.hpp"
 
+#include "mir_interfaces/msg/object_list.hpp"
+
 #include "mir_world_model/world_model.hpp"
 
 class WorldModelNode : public rclcpp_lifecycle::LifecycleNode
@@ -38,4 +40,11 @@ public:
 private:
   // ============================ Members ============================
   std::shared_ptr<WorldModel> world_model_;
+
+  // subscribers
+  rclcpp::Subscription<mir_interfaces::msg::ObjectList>::SharedPtr
+    object_list_subscriber_;
+
+  // subscribers callbacks
+  void objectListCallback(const mir_interfaces::msg::ObjectList::SharedPtr msg);
 };

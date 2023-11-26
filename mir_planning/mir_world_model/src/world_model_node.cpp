@@ -48,6 +48,15 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 WorldModelNode::on_activate(const rclcpp_lifecycle::State& state)
 {
   RCLCPP_INFO(get_logger(), "WorldModelNode activated");
+
+  // create subscibers
+  object_list_subscriber_ =
+    this->create_subscription<mir_interfaces::msg::ObjectList>(
+      "~/object_list",
+      rclcpp::SensorDataQoS(),
+      std::bind(
+        &WorldModelNode::objectListCallback, this, std::placeholders::_1));
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
 }
@@ -56,14 +65,29 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 WorldModelNode::on_deactivate(const rclcpp_lifecycle::State& state)
 {
   RCLCPP_INFO(get_logger(), "WorldModelNode deactivated");
+
+  LifecycleNode::on_deactivate(state);
+
+  // shutdown subscribers
+  object_list_subscriber_.reset();
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-WorldModelNode::on_cleanup(const rclcpp_lifecycle::State&)
+WorldModelNode::on_cleanup(const rclcpp_lifecycle::State& state)
 {
   RCLCPP_INFO(get_logger(), "WorldModelNode cleaned up");
+
+  LifecycleNode::on_cleanup(state);
+
+  // destroy subscribers
+  object_list_subscriber_.reset();
+
+  // destroy world model
+  world_model_.reset();
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
 }
@@ -72,8 +96,30 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 WorldModelNode::on_shutdown(const rclcpp_lifecycle::State& state)
 {
   RCLCPP_INFO(get_logger(), "WorldModelNode shut down");
+
+  LifecycleNode::on_shutdown(state);
+
+  // delete subscribers
+  delete object_list_subscriber_.get();
+
+  // destroy world model
+  delete world_model_.get();
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
+}
+
+void
+WorldModelNode::objectListCallback(
+  const mir_interfaces::msg::ObjectList::SharedPtr msg)
+{
+  RCLCPP_INFO(get_logger(), "WorldModelNode received object list");
+
+  // update world model
+  for (auto& object : msg->objects) {
+    world_model_->addAtworkObjectToWorkstation(
+      msg->workstation, object.name, object.database_id, object.pose);
+  }
 }
 
 // Register the component with class_loader
