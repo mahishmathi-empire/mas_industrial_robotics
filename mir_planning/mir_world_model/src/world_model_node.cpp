@@ -10,9 +10,8 @@ WorldModelNode::WorldModelNode(const rclcpp::NodeOptions& options)
 
   // declare overridable parameters
   for (auto& override : overrides) {
-      declare_parameter(override.get_name(), override.get_parameter_value());
+    declare_parameter(override.get_name(), override.get_parameter_value());
   }
-
 }
 
 WorldModelNode::~WorldModelNode()
@@ -29,21 +28,17 @@ WorldModelNode::on_configure(const rclcpp_lifecycle::State&)
   world_model_ = std::make_shared<WorldModel>();
 
   // create wokstation objects from parameters
-  auto workstation_names = this->list_parameters({"workstations"}, 2).prefixes;
+  auto workstation_names =
+    this->list_parameters({ "workstations" }, 2).prefixes;
   for (auto& workstation_name : workstation_names) {
-    std::string name = this->get_parameter(workstation_name + ".name").as_string();
-    std::string type = this->get_parameter(workstation_name + ".type").as_string();
-    double height = this->get_parameter(workstation_name + ".height").as_double();
+    std::string name =
+      this->get_parameter(workstation_name + ".name").as_string();
+    std::string type =
+      this->get_parameter(workstation_name + ".type").as_string();
+    double height =
+      this->get_parameter(workstation_name + ".height").as_double();
     world_model_->addWorkstation(name, type, height);
   }
-
-  // print workstation names
-  std::vector<Workstation> workstations;
-  world_model_->getWorkstations(workstations);
-  for (auto& workstation : workstations) {
-    RCLCPP_INFO(get_logger(), "--> Workstation: %s", workstation.name.c_str());
-  }
-
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;

@@ -4,8 +4,8 @@
       ws_1:
         name: WS00
         type: Normal
-        height: 0.0
+        height: 5.0
       ws_2:
         name: SH01
         type: Shelf
-        height: 0.0
+        height: 10.0

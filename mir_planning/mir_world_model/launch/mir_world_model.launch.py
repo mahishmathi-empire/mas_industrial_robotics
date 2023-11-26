@@ -10,14 +10,8 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.events.lifecycle import ChangeState
 from launch_ros.events.lifecycle import matches_node_name
-from ament_index_python.packages import (
-    get_package_share_directory,
-    get_package_prefix,
-    get_resource,
-)
+from ament_index_python.packages import get_package_share_directory
 from launch.event_handlers.on_shutdown import OnShutdown
-
-
 import lifecycle_msgs.msg
 import os
 
@@ -63,7 +57,7 @@ def generate_launch_description():
                         transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVE_SHUTDOWN,
                     )
                 ),
-                LogInfo(msg="[mmor_launch] mmor node is exiting."),
+                LogInfo(msg="world model node is exiting."),
             ],
         )
     )

@@ -7,10 +7,10 @@
 #define WORLD_MODEL_HPP
 
 #include <ctime>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -18,7 +18,9 @@
 struct AtworkObject
 {
   std::string name;
+  int id;
   geometry_msgs::msg::PoseStamped pose;
+  std::string workstation_name;
   std::time_t added_time;
 };
 
@@ -37,7 +39,7 @@ struct Workstation
   std::string name;
   WorkstationType type;
   double height;
-  std::vector<AtworkObject> atwork_objects;
+  std::vector<int> object_ids;
 };
 
 // map from string to workstation type
@@ -58,7 +60,8 @@ public:
 private:
   // ============================ Members ============================
   std::map<std::string, Workstation> workstations_;
-  
+  std::map<std::string, AtworkObject> atwork_objects_;
+
 public:
   // ============================ Methods ============================
 
@@ -132,6 +135,7 @@ public:
   void addAtworkObjectToWorkstation(
     std::string workstation_name,
     std::string object_name,
+    int object_id,
     geometry_msgs::msg::PoseStamped object_pose);
 
   /**
@@ -166,13 +170,10 @@ public:
   /**
    * @brief Returns an object from a workstation by id
    *
-   * @param workstation_name - name of the workstation
    * @param object_id - id of the object
    * @param atwork_object - reference to the object
    */
-  void getWorkstationObject(std::string workstation_name,
-                            int object_id,
-                            AtworkObject& atwork_object);
+  void getObjectById(int object_id, AtworkObject& atwork_object);
 
   /**
    * @brief Returns the pose of an object
