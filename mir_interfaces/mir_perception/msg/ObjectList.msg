@@ -2,4 +2,4 @@
 Object[] objects
 
 # workstation name
-string workstation ""
+string workstation_name ""

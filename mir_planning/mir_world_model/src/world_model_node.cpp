@@ -117,8 +117,8 @@ WorldModelNode::objectListCallback(
 
   // update world model
   for (auto& object : msg->objects) {
-    world_model_->addAtworkObjectToWorkstation(
-      msg->workstation, object.name, object.database_id, object.pose);
+    world_model_->addObjectToWorkstation(
+      msg->workstation_name, object.name, object.database_id, object.pose);
   }
 }
 
