@@ -212,8 +212,7 @@ private:
    * \param[in] cloud_msg
    */
   void synchronizeCallback(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
-                           const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
-                           const std::string workstation);
+                           const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg);
 
   // Recognize Clouds callback
   void recognizedCloudCallback(const mir_interfaces::msg::ObjectList& msg);
@@ -281,6 +280,10 @@ protected:
   // yolo inference file paths
   std::string yolo_classes_info_path_;
   std::string yolo_weights_path_;
+
+  // unique lock for data (pointcloud and image)
+  std::mutex data_mutex_;
+  std::unique_lock<std::mutex> data_lock_;
 
   // Used to store pointcloud and image received from callback
   sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_msg_;
