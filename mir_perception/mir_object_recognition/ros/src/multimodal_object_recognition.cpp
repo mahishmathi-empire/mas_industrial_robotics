@@ -397,7 +397,7 @@ MultiModalObjectRecognitionROS::recognizeCloudAndImage(
     adjustObjectPose(combined_object_list);
     // Publish object to object list merger
     // add workstation info
-    combined_object_list.workstation = workstation;
+    combined_object_list.workstation_name = workstation;
     publishObjectList(combined_object_list);
   } else {
     RCLCPP_WARN(get_logger(), "No object detected to publish");
@@ -816,6 +816,8 @@ MultiModalObjectRecognitionROS::on_deactivate(const rclcpp_lifecycle::State&)
   pub_object_list_->on_deactivate();
   pub_pc_object_pose_array_->on_deactivate();
   pub_rgb_object_pose_array_->on_deactivate();
+
+  msg_sync_.reset(new Sync(msgSyncPolicy(10), image_sub_, cloud_sub_));
 
   image_sub_.unsubscribe();
   cloud_sub_.unsubscribe();
