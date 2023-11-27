@@ -16,9 +16,9 @@ WorldModel::~WorldModel() {}
 // ============================ Methods ============================
 void 
 WorldModel::addWorkstation(
-  std::string name, 
-  std::string type, 
-  double height)
+  const std::string &name, 
+  const std::string &type, 
+  const double &height)
 {
   Workstation workstation;
   workstation.name = name;
@@ -29,17 +29,17 @@ WorldModel::addWorkstation(
 
 void 
 WorldModel::removeWorkstation(
-  std::string name)
+  const std::string &name)
 {
   workstations_.erase(name);
 }
 
 void 
 WorldModel::addObjectToWorkstation(
-  std::string workstation_name,
-  std::string object_name,
-  int object_id,
-  geometry_msgs::msg::PoseStamped object_pose)
+  const std::string &workstation_name,
+  const std::string &object_name,
+  const int &object_id,
+  const geometry_msgs::msg::PoseStamped &object_pose)
 {
   AtworkObject atwork_object;
   atwork_object.name = object_name;
@@ -53,8 +53,8 @@ WorldModel::addObjectToWorkstation(
 
 void 
 WorldModel::removeObjectFromWorkstation(
-  std::string workstation_name,
-  int object_id)
+  const std::string &workstation_name,
+  const int &object_id)
 { 
   // remove object from workstation
   std::vector<int>::iterator it = std::find(
@@ -69,14 +69,14 @@ WorldModel::removeObjectFromWorkstation(
 
 std::vector<int> 
 WorldModel::getWorkstationObjectIds(
-  std::string workstation_name)
+  const std::string &workstation_name)
 {
   return workstations_[workstation_name].object_ids;
 }
 
 std::vector<std::string> 
 WorldModel::getWorkstationObjects(
-  std::string workstation_name)
+  const std::string &workstation_name)
 {
   std::vector<std::string> objects;
   for (int id : workstations_[workstation_name].object_ids)
@@ -99,7 +99,7 @@ WorldModel::getAllWorkstations()
 
 int 
 WorldModel::getWorkstationHeight(
-  std::string workstation_name)
+  const std::string &workstation_name)
 {
   return workstations_[workstation_name].height;
 }

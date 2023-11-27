@@ -73,16 +73,17 @@ public:
    * @param height Height of the workstation.
    */
   void addWorkstation(
-    std::string name, 
-    std::string type, 
-    double height);
+    const std::string &name, 
+    const std::string &type, 
+    const double &height);
 
   /**
    * @brief Removes a workstation from the world model.
    * 
    * @param name Name of the workstation.
    */
-  void removeWorkstation(std::string name);
+  void removeWorkstation(
+    const std::string &name);
 
   /**
    * @brief adds an object to a workstation
@@ -93,10 +94,10 @@ public:
    * @param object_pose pose of the object
   */
   void addObjectToWorkstation(
-    std::string workstation_name,
-    std::string object_name,
-    int object_id,
-    geometry_msgs::msg::PoseStamped object_pose);
+    const std::string &workstation_name,
+    const std::string &object_name,
+    const int &object_id,
+    const geometry_msgs::msg::PoseStamped &object_pose);
 
   /**
    * @brief removes an object from a workstation
@@ -105,8 +106,8 @@ public:
    * @param object_id id of the object
   */
   void removeObjectFromWorkstation(
-    std::string workstation_name,
-    int object_id);
+    const std::string &workstation_name,
+    const int &object_id);
   
   /**
    * @brief gets IDs of all objects on a workstation
@@ -114,7 +115,7 @@ public:
    * @param workstation_name name of the workstation
   */
   std::vector<int> getWorkstationObjectIds(
-    std::string workstation_name);
+    const std::string &workstation_name);
 
   /**
    * @brief gets all objects on a workstation
@@ -122,7 +123,7 @@ public:
    * @param workstation_name name of the workstation
   */
   std::vector<std::string> getWorkstationObjects(
-    std::string workstation_name);
+    const std::string &workstation_name);
 
   /**
    * @brief gets all workstation objects
@@ -130,12 +131,12 @@ public:
   std::vector<Workstation> getAllWorkstations();
 
   /**
-   * @brief gets the type of a workstation
+   * @brief gets the height of a workstation
    * 
    * @param workstation_name name of the workstation
   */
   int getWorkstationHeight(
-    std::string workstation_name);
+    const std::string &workstation_name);
 };
 
 #endif // WORLD_MODEL_HPP
