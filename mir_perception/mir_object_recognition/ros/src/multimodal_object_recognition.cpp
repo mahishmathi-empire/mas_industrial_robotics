@@ -26,36 +26,12 @@ MultiModalObjectRecognitionROS::MultiModalObjectRecognitionROS(
 void
 MultiModalObjectRecognitionROS::synchronizeCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr& image,
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud,
-  const std::string workstation)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud)
 {
-  pointcloud_msg_ = cloud;
-  image_msg_ = image;
-
-  // pre-process the pointcloud
-  this->preprocessPointCloud(pointcloud_msg_);
-  scene_segmentation_ros_->addCloudAccumulation(cloud_);
-  this->recognizeCloudAndImage(workstation);
-
-  // Reset received recognized cloud and image
-  received_recognized_cloud_list_flag_ = false;
-
-  // reset object id
-  scene_segmentation_ros_->resetPclObjectId();
-
-  // clear recognized image and cloud list
-  recognized_image_list_.objects.clear();
-  recognized_cloud_list_.objects.clear();
-
-  scene_segmentation_ros_->resetCloudAccumulation();
-
-  // unsubscribe from the topics
-  image_sub_.unsubscribe();
-  cloud_sub_.unsubscribe();
-
-  // execute goal
-  if (current_goal_handle_) {
-    execute_goal(current_goal_handle_);
+  // save the latest data only if data is not locked
+  if (!data_lock_.owns_lock()) {
+    this->image_msg_ = image;
+    this->pointcloud_msg_ = cloud;
   }
 }
 
@@ -397,7 +373,7 @@ MultiModalObjectRecognitionROS::recognizeCloudAndImage(
     adjustObjectPose(combined_object_list);
     // Publish object to object list merger
     // add workstation info
-    combined_object_list.workstation = workstation;
+    combined_object_list.workstation_name = workstation;
     publishObjectList(combined_object_list);
   } else {
     RCLCPP_WARN(get_logger(), "No object detected to publish");
@@ -625,6 +601,7 @@ MultiModalObjectRecognitionROS::handle_cancel(
     rclcpp_action::ServerGoalHandle<mir_interfaces::action::ObjectDetection>>
     goal_handle)
 {
+  // TODO: Handle cancel request
   RCLCPP_INFO(this->get_logger(), "Received request to cancel goal.");
   (void)goal_handle;
   return rclcpp_action::CancelResponse::ACCEPT;
@@ -638,15 +615,11 @@ MultiModalObjectRecognitionROS::handle_accepted(
 {
   current_goal_handle_ = goal_handle;
 
-  auto workstation = goal_handle->get_goal()->workstation;
-
-  // register msg sync callback
-  msg_sync_->registerCallback(
-    std::bind(&MultiModalObjectRecognitionROS::synchronizeCallback,
-              this,
-              std::placeholders::_1,
-              std::placeholders::_2,
-              workstation));
+  // execute goal
+  std::thread{ std::bind(
+                 &MultiModalObjectRecognitionROS::execute_goal, this, _1),
+               goal_handle }
+    .detach();
 }
 
 void
@@ -660,10 +633,55 @@ MultiModalObjectRecognitionROS::execute_goal(
   auto result =
     std::make_shared<mir_interfaces::action::ObjectDetection::Result>();
 
+  auto workstation = goal_handle->get_goal()->workstation;
+
+  // check if data is already locked
+  if (data_lock_.owns_lock()) {
+    RCLCPP_WARN(get_logger(),
+                "Skipping goal because a previous goal is still processing "
+                "data");
+    result->result = false;
+    goal_handle->abort(result);
+    current_goal_handle_.reset();
+  }
+
+  // lock data to prevent other goals from using it
+  data_lock_.lock();
+
+  if (pointcloud_msg_ == nullptr || image_msg_ == nullptr) {
+    RCLCPP_WARN(get_logger(),
+                "Skipping goal because no data has been received yet");
+    result->result = false;
+    goal_handle->abort(result);
+    current_goal_handle_.reset();
+    return;
+  }
+
+  // pre-process the pointcloud
+  this->preprocessPointCloud(pointcloud_msg_);
+  scene_segmentation_ros_->addCloudAccumulation(cloud_);
+  this->recognizeCloudAndImage(workstation);
+
+  // Reset received recognized cloud and image
+  received_recognized_cloud_list_flag_ = false;
+
+  // reset object id
+  scene_segmentation_ros_->resetPclObjectId();
+
+  // clear recognized image and cloud list
+  recognized_image_list_.objects.clear();
+  recognized_cloud_list_.objects.clear();
+
+  scene_segmentation_ros_->resetCloudAccumulation();
+
+  // unlock data so that other goals can use it
+  data_lock_.unlock();
+
   if (rclcpp::ok()) {
     result->result = true;
     goal_handle->succeed(result);
     RCLCPP_INFO(this->get_logger(), "Goal succeeded");
+    current_goal_handle_.reset();
   }
 }
 
@@ -711,6 +729,9 @@ MultiModalObjectRecognitionROS::on_configure(const rclcpp_lifecycle::State&)
   rgb_cluster_remove_outliers_ = true;
 
   msg_sync_ = std::make_shared<Sync>(msgSyncPolicy(10), image_sub_, cloud_sub_);
+
+  // create data lock
+  data_lock_ = std::unique_lock<std::mutex>(data_mutex_, std::defer_lock);
 
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -790,6 +811,10 @@ MultiModalObjectRecognitionROS::on_activate(const rclcpp_lifecycle::State&)
   image_sub_.subscribe(this, "input_image_topic");
   cloud_sub_.subscribe(this, "input_cloud_topic");
 
+  // register msg sync callback
+  msg_sync_->registerCallback(
+    &MultiModalObjectRecognitionROS::synchronizeCallback, this);
+
   pub_workspace_height_->on_activate();
   pub_debug_cloud_plane_->on_activate();
   pub_debug_rgb_image_->on_activate();
@@ -816,6 +841,8 @@ MultiModalObjectRecognitionROS::on_deactivate(const rclcpp_lifecycle::State&)
   pub_object_list_->on_deactivate();
   pub_pc_object_pose_array_->on_deactivate();
   pub_rgb_object_pose_array_->on_deactivate();
+
+  msg_sync_.reset(new Sync(msgSyncPolicy(10), image_sub_, cloud_sub_));
 
   image_sub_.unsubscribe();
   cloud_sub_.unsubscribe();
