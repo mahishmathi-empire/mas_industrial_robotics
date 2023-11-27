@@ -1,0 +1,4 @@
+string workstation_name
+string workstation_type
+float32 workstation_height
+Object[] objects

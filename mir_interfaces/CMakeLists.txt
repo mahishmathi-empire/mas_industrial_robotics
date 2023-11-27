@@ -31,6 +31,7 @@ set(perception_msg_files
   "mir_perception/msg/PlanarPolygon.msg"
   "mir_perception/msg/NamedShape.msg"
   "mir_perception/msg/NamedColor.msg"
+  "mir_perception/msg/Workstation.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
