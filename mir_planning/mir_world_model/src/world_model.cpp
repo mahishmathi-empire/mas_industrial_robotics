@@ -36,19 +36,47 @@ WorldModel::removeWorkstation(
 
 void 
 WorldModel::addObjectToWorkstation(
-  const std::string &workstation_name,
-  const std::string &object_name,
-  const int &object_id,
-  const geometry_msgs::msg::PoseStamped &object_pose)
+  const mir_interfaces::msg::ObjectList::SharedPtr object_list)
 {
-  AtworkObject atwork_object;
-  atwork_object.name = object_name;
-  atwork_object.id = object_id;
-  atwork_object.pose = object_pose;
-  atwork_object.workstation_name = workstation_name;
-  atwork_object.added_time = std::time(nullptr); // TODO: check if this is in required format
-  workstations_[workstation_name].object_ids.push_back(object_id);
-  atwork_objects_[object_id] = atwork_object;
+  ObjectVector objects_from_rgb;
+  ObjectVector objects_from_pcl;
+
+  std::string &workstation_name = object_list->workstation_name;
+  ObjectVector workstation_objects = getWorkstationObjects(workstation_name); ;
+
+  for (auto object : object_list->objects)
+  {
+    // add object to respective source list
+    if(object.database_id > 99)
+    {
+      objects_from_rgb.push_back(object);
+    }
+    else
+    {
+      objects_from_pcl.push_back(object);
+    }
+  }
+
+  if (objects_from_rgb.size() > 0 && objects_from_pcl.size() > 0)
+  {
+    ObjectVector objects_combined = 
+      filterDuplicatesByDistance(&objects_from_rgb, &objects_from_pcl); //this wil also remove the duplicates 
+  }
+  else if (objects_from_rgb.size() > 0)
+  {
+    ObjectVector &objects_combined = objects_from_rgb;
+  }
+  else if (objects_from_pcl.size() > 0)
+  {
+    ObjectVector &objects_combined = objects_from_pcl;
+  }
+
+  // find duplicates between workstation_objects and objects_combined
+  ObjectVector objects_final = 
+    filterDuplicatesByDistance(&objects_combined, &workstation_objects);
+
+  workstations_[workstation_name].objects = objects_final;
+
 }
 
 void 
@@ -67,23 +95,12 @@ WorldModel::removeObjectFromWorkstation(
   }
 }
 
-std::vector<int> 
-WorldModel::getWorkstationObjectIds(
-  const std::string &workstation_name)
-{
-  return workstations_[workstation_name].object_ids;
-}
 
-std::vector<std::string> 
+ObjectVector
 WorldModel::getWorkstationObjects(
   const std::string &workstation_name)
 {
-  std::vector<std::string> objects;
-  for (int id : workstations_[workstation_name].object_ids)
-  {
-    objects.push_back(atwork_objects_[id].name);
-  }
-  return objects;
+  return workstations_[workstation_name].objects;
 }
 
 std::vector<Workstation> 
@@ -92,7 +109,7 @@ WorldModel::getAllWorkstations()
   std::vector<Workstation> workstations;
   for (auto const& workstation : workstations_)
   {
-    workstations.push_back(workstation.second);
+    workstations.push_back(workstation);
   }
   return workstations;
 }
@@ -104,3 +121,37 @@ WorldModel::getWorkstationHeight(
   return workstations_[workstation_name].height;
 }
 
+ObjectVector 
+WorldModel::filterDuplicatesByDistance(
+  const ObjectVector &objectlist_primary,
+  const ObjectVector &objectlist_secondary)
+{
+  ObjectVector objectlist_combined;
+  for (auto const& object_primary : objectlist_secondary)
+  {
+    bool duplicate = false;
+    for (auto const& object_secondary : objectlist_primary)
+    {
+      float distance = sqrt(
+        pow(object_primary.pose.position.x - object_secondary.pose.position.x, 2) +
+        pow(object_primary.pose.position.y - object_secondary.pose.position.y, 2));
+
+      if (distance < 0.02)
+      {
+        duplicate = true;
+        break;
+      }
+
+    }
+    if (!duplicate)
+    {
+      objectlist_combined.push_back(object_secondary);
+    }
+  }
+  // return the objectlist_combined + objectlist_primary
+  objectlist_combined.insert(
+    objectlist_combined.end(), 
+    objectlist_primary.begin(), 
+    objectlist_primary.end());
+
+}

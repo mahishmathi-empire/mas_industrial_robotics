@@ -14,41 +14,9 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
-// workstation type enum
-enum WorkstationType
-{
-  NORMAL,
-  SHELF,
-  CAVITY,
-  ROTATING_TABLE
-};
-
-// workstation data structure
-struct Workstation
-{
-  std::string name;
-  WorkstationType type;
-  double height;
-  std::vector<int> object_ids;
-};
-
-// object data structure
-struct AtworkObject
-{
-  std::string name;
-  int id;
-  geometry_msgs::msg::PoseStamped pose;
-  std::string workstation_name;
-  std::time_t added_time;
-};
-
-// map from string to workstation type
-static std::map<std::string, WorkstationType> workstation_type_map = {
-  { "normal", WorkstationType::NORMAL },
-  { "shelf", WorkstationType::SHELF },
-  { "cavity", WorkstationType::CAVITY },
-  { "rotating_table", WorkstationType::ROTATING_TABLE }
-};
+#include "mir_interfaces/msg/object_list.hpp"
+#include "mir_interfaces/msg/object.hpp"
+#include "mir_interfaces/msg/Workstation.hpp"
 
 class WorldModel
 {
@@ -60,9 +28,9 @@ public:
 private:
   // ============================ Members ============================
   std::map<std::string, Workstation> workstations_;
-  std::map<int, AtworkObject> atwork_objects_;
 
 public:
+  typedef std::vector<mir_interfaces::msg::Object> ObjectVector;
   // ============================ Methods ============================
 
   /**
@@ -88,47 +56,33 @@ public:
   /**
    * @brief adds an object to a workstation
    * 
-   * @param workstation_name name of the workstation
-   * @param object_name name of the object
-   * @param object_id id of the object
-   * @param object_pose pose of the object
+   * @param object_list list of objects including workstation_name, pose, id and name
   */
   void addObjectToWorkstation(
-    const std::string &workstation_name,
-    const std::string &object_name,
-    const int &object_id,
-    const geometry_msgs::msg::PoseStamped &object_pose);
+    const mir_interfaces::msg::ObjectList::SharedPtr object_list);
 
   /**
    * @brief removes an object from a workstation
    * 
    * @param workstation_name name of the workstation
-   * @param object_id id of the object
+   * @param object_name name of the object
   */
   void removeObjectFromWorkstation(
     const std::string &workstation_name,
-    const int &object_id);
-  
-  /**
-   * @brief gets IDs of all objects on a workstation
-   * 
-   * @param workstation_name name of the workstation
-  */
-  std::vector<int> getWorkstationObjectIds(
-    const std::string &workstation_name);
+    const std::string &object_name);
 
   /**
    * @brief gets all objects on a workstation
    * 
    * @param workstation_name name of the workstation
   */
-  std::vector<std::string> getWorkstationObjects(
+  std::vector<mir_interfaces::msg::WorldModelObject> getWorkstationObjects(
     const std::string &workstation_name);
 
   /**
-   * @brief gets all workstation objects
+   * @brief gets all workstations
   */
-  std::vector<Workstation> getAllWorkstations();
+  std::vector<mir_interfaces::msg::Workstation> getAllWorkstations();
 
   /**
    * @brief gets the height of a workstation
@@ -137,6 +91,17 @@ public:
   */
   int getWorkstationHeight(
     const std::string &workstation_name);
+
+  /**
+   * @brief removes duplicate objects from two lists based on their distance
+   * if distance is smaller than 0.02m, the object from the secondary list is removed
+   * 
+   * @param ojectlist_primary primary list of objects
+   * @param ojectlist_secondary secondary list of objects
+   */
+  ObjectVector WorldModel::filterDuplicatesByDistance(
+  const ObjectVector &objectlist_primary,
+  const ObjectVector &objectlist_secondary);
 };
 
 #endif // WORLD_MODEL_HPP
