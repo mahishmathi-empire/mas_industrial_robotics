@@ -116,27 +116,21 @@ WorldModelNode::objectListCallback(
   RCLCPP_INFO(get_logger(), "WorldModelNode received object list");
 
   // update world model
-  for (auto& object : msg->objects) {
-    world_model_->addObjectToWorkstation(msg->workstation_name,
-                                         object.name,
-                                         object.database_id,
-                                         object.pose,
-                                         this->now());
-  }
+  world_model_->addObjectToWorkstation(msg);
 
   std::cout << "------------------" << std::endl;
 
   // print world model
-  std::vector<Workstation> workstations = world_model_->getAllWorkstations();
+  std::vector<mir_interfaces::msg::Workstation> workstations;
+  world_model_->getAllWorkstations(workstations);
   for (auto& workstation : workstations) {
-    std::vector<std::string> objects =
-      world_model_->getWorkstationObjects(workstation.name);
-    std::string objects_string = "";
+    WorldModel::ObjectVector objects;
+    world_model_->getWorkstationObjects(workstation.workstation_name, objects);
+    
+    std::cout << "Workstation: " << workstation.workstation_name << std::endl;
     for (auto& object : objects) {
-      objects_string += object + ", ";
+      std::cout << "  Object: " << object.name << " ID: " << object.database_id << std::endl;
     }
-    RCLCPP_INFO(get_logger(), "Workstation %s: %s",
-                workstation.name.c_str(), objects_string.c_str());
   }
 }
 
