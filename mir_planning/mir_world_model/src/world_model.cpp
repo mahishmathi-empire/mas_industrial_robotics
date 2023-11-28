@@ -43,7 +43,7 @@ void WorldModel::addObjectToWorkstation(
     std::string &workstation_name = object_list->workstation_name;
     ObjectVector &workstation_objects = workstations_[workstation_name].objects;
 
-    getWorkstationObjects(workstation_name, workstation_objects);
+    getAllObjects(workstation_name, workstation_objects);
 
     for (const auto &object : object_list->objects)
     {
@@ -101,10 +101,27 @@ WorldModel::removeObjectFromWorkstation(
 
 
 void
-WorldModel::getWorkstationObjects(
+WorldModel::getAllObjects(
   const std::string &workstation_name, ObjectVector &objects)
 {
   objects = workstations_[workstation_name].objects;
+}
+
+void 
+WorldModel::getWorkstationObject(
+    const std::string &workstation_name,
+    const std::string &object_name,
+    mir_interfaces::msg::Object &object)
+{
+    ObjectVector &workstation_objects = workstations_[workstation_name].objects;
+    for (auto const &workstation_object : workstation_objects)
+    {
+        if (workstation_object.name == object_name)
+        {
+            object = workstation_object;
+            return;
+        }
+    }
 }
 
 void 
@@ -115,6 +132,8 @@ WorldModel::getAllWorkstations(std::vector<mir_interfaces::msg::Workstation> &wo
     workstations.push_back(workstation.second);
   }
 }
+
+
 
 void 
 WorldModel::getWorkstationHeight(
