@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(mir_interfaces REQUIRED)
 
@@ -25,6 +26,8 @@ include_directories(
   ${geometry_msgs_INCLUDE_DIRS}
   ${lifecycle_msgs_INCLUDE_DIRS}
   ${rclcpp_lifecycle_INCLUDE_DIRS}
+  ${rclcpp_components_INCLUDE_DIRS}
+  ${rclcpp_action_INCLUDE_DIRS}
   ${mir_interfaces_INCLUDE_DIRS}
 )
 
@@ -37,6 +40,7 @@ ament_target_dependencies(world_model_node
   rclcpp
   rclcpp_lifecycle 
   rclcpp_components
+  rclcpp_action
   std_msgs 
   geometry_msgs 
   lifecycle_msgs 

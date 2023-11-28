@@ -82,6 +82,19 @@ public:
     const std::string &workstation_name, ObjectVector &objects);
 
   /**
+   * @brief gets an object from a workstation by name
+   *        required for picking up object
+   * 
+   * @param workstation_name name of the workstation
+   * @param object_name name of the object
+   * @param object object to be returned
+  */
+  void getWorkstationObject(
+    const std::string &workstation_name,
+    const std::string &object_name,
+    mir_interfaces::msg::Object &object);
+
+  /**
    * @brief gets all workstations
   */
   void getAllWorkstations(
