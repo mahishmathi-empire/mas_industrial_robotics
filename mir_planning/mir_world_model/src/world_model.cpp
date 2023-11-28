@@ -21,9 +21,9 @@ WorldModel::addWorkstation(
   const double &height)
 {
   mir_interfaces::msg::Workstation workstation;
-  workstation.workstation_name = name;
-  workstation.workstation_type = type;
-  workstation.workstation_height = height;
+  workstation.name = name;
+  workstation.type = type;
+  workstation.height = height;
   workstations_[name] = workstation; // add workstation to map
 }
 
@@ -34,65 +34,68 @@ WorldModel::removeWorkstation(
   workstations_.erase(name);
 }
 
-void 
-WorldModel::addObjectToWorkstation(
-  const mir_interfaces::msg::ObjectList::SharedPtr object_list)
+void WorldModel::addObjectToWorkstation(
+    const mir_interfaces::msg::ObjectList::SharedPtr object_list)
 {
-  ObjectVector objects_from_rgb;
-  ObjectVector objects_from_pcl;
+    ObjectVector objects_from_rgb;
+    ObjectVector objects_from_pcl;
 
-  std::string &workstation_name = object_list->workstation_name;
-  ObjectVector workstation_objects;
-  getWorkstationObjects(workstation_name, workstation_objects);
+    std::string &workstation_name = object_list->workstation_name;
+    ObjectVector &workstation_objects = workstations_[workstation_name].objects;
 
-  for (auto object : object_list->objects)
-  {
-    // add object to respective source list
-    if(object.database_id > 99)
+    getWorkstationObjects(workstation_name, workstation_objects);
+
+    for (const auto &object : object_list->objects)
     {
-      objects_from_rgb.push_back(object);
+        // add object to respective source list
+        if (object.database_id > 99)
+        {
+            objects_from_rgb.push_back(object);
+        }
+        else
+        {
+            objects_from_pcl.push_back(object);
+        }
+    }
+
+    ObjectVector objects_combined;
+
+    if (!objects_from_rgb.empty() && !objects_from_pcl.empty())
+    {
+        filterDuplicatesByDistance(objects_combined, objects_from_rgb, objects_from_pcl);
+    }
+    else if (objects_from_pcl.empty() && !objects_from_rgb.empty())
+    {
+        objects_combined = objects_from_rgb;
+    }
+    else if (objects_from_rgb.empty() && !objects_from_pcl.empty())
+    {
+        objects_combined = objects_from_pcl;
     }
     else
     {
-      objects_from_pcl.push_back(object);
+        throw std::runtime_error("No objects found in object list");
     }
-  }
 
-  if (objects_from_rgb.size() > 0 && objects_from_pcl.size() > 0)
-  {
-    ObjectVector objects_combined = 
-      filterDuplicatesByDistance(&objects_from_rgb, &objects_from_pcl); //this wil also remove the duplicates 
-  }
-  else if (objects_from_rgb.size() > 0)
-  {
-    ObjectVector &objects_combined = objects_from_rgb;
-  }
-  else if (objects_from_pcl.size() > 0)
-  {
-    ObjectVector &objects_combined = objects_from_pcl;
-  }
-
-  // find duplicates between workstation_objects and objects_combined
-  ObjectVector objects_final = 
-    filterDuplicatesByDistance(&objects_combined, &workstation_objects);
-
-  workstations_[workstation_name].objects = objects_final;
-
+    // find duplicates between workstation_objects and objects_combined
+    filterDuplicatesByDistance(workstation_objects, objects_combined);
 }
+
 
 void 
 WorldModel::removeObjectFromWorkstation(
   const std::string &workstation_name,
-  const int &object_id)
+  const std::string &object_name)
 { 
   // remove object from workstation
-  std::vector<int>::iterator it = std::find(
-    workstations_[workstation_name].object_ids.begin(),
-    workstations_[workstation_name].object_ids.end(),
-    object_id);
-  if (it != workstations_[workstation_name].object_ids.end())
+  ObjectVector &workstation_objects = workstations_[workstation_name].objects;
+  for (auto it = workstation_objects.begin(); it != workstation_objects.end(); ++it)
   {
-    workstations_[workstation_name].object_ids.erase(it);
+    if (it->name == object_name)
+    {
+      workstation_objects.erase(it);
+      break;
+    }
   }
 }
 
@@ -113,27 +116,28 @@ WorldModel::getAllWorkstations(std::vector<mir_interfaces::msg::Workstation> &wo
   }
 }
 
-int 
+void 
 WorldModel::getWorkstationHeight(
-  const std::string &workstation_name)
+  const std::string &workstation_name, double &height)
 {
-  return workstations_[workstation_name].workstation_height;
+  height = workstations_[workstation_name].height;
 }
 
-ObjectVector 
+void 
 WorldModel::filterDuplicatesByDistance(
+  ObjectVector &objectlist_combined,
   const ObjectVector &objectlist_primary,
   const ObjectVector &objectlist_secondary)
 {
-  ObjectVector objectlist_combined;
-  for (auto const& object_primary : objectlist_secondary)
+  objectlist_combined.clear();
+  for (auto const& object_secondary : objectlist_secondary)
   {
     bool duplicate = false;
-    for (auto const& object_secondary : objectlist_primary)
+    for (auto const& object_primary : objectlist_primary)
     {
       float distance = sqrt(
-        pow(object_primary.pose.position.x - object_secondary.pose.position.x, 2) +
-        pow(object_primary.pose.position.y - object_secondary.pose.position.y, 2));
+        pow(object_primary.pose.pose.position.x - object_secondary.pose.pose.position.x, 2) +
+        pow(object_primary.pose.pose.position.y - object_secondary.pose.pose.position.y, 2));
 
       if (distance < 0.02)
       {
@@ -152,5 +156,40 @@ WorldModel::filterDuplicatesByDistance(
     objectlist_combined.end(), 
     objectlist_primary.begin(), 
     objectlist_primary.end());
+
+}
+
+void 
+WorldModel::filterDuplicatesByDistance(
+  ObjectVector &objectlist_primary,
+  ObjectVector &objectlist_secondary)
+{
+  ObjectVector objectlist_new;
+  for (auto const& object_secondary : objectlist_secondary)
+  {
+    bool duplicate = false;
+    for (auto const& object_primary : objectlist_primary)
+    {
+      float distance = sqrt(
+        pow(object_primary.pose.pose.position.x - object_secondary.pose.pose.position.x, 2) +
+        pow(object_primary.pose.pose.position.y - object_secondary.pose.pose.position.y, 2));
+
+      if (distance < 0.02)
+      {
+        duplicate = true;
+        break;
+      }
+
+    }
+    if (!duplicate)
+    {
+      objectlist_new.push_back(object_secondary);
+    }
+  }
+  // return the objectlist_combined + objectlist_primary
+  objectlist_primary.insert(
+    objectlist_primary.end(), 
+    objectlist_new.begin(), 
+    objectlist_new.end());
 
 }

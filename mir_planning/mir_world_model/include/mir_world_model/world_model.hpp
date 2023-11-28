@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -92,19 +93,32 @@ public:
    * 
    * @param workstation_name name of the workstation
   */
-  int getWorkstationHeight(
-    const std::string &workstation_name);
+  void getWorkstationHeight(
+    const std::string &workstation_name, double &height);
 
   /**
    * @brief removes duplicate objects from two lists based on their distance
    * if distance is smaller than 0.02m, the object from the secondary list is removed
    * 
-   * @param ojectlist_primary primary list of objects
-   * @param ojectlist_secondary secondary list of objects
+   * @param objectlist_primary primary list of objects. This list will be modified.
+   * @param objectlist_secondary secondary list of objects
    */
-  ObjectVector WorldModel::filterDuplicatesByDistance(
-  const ObjectVector &objectlist_primary,
-  const ObjectVector &objectlist_secondary);
+  void filterDuplicatesByDistance(
+    ObjectVector &objectlist_primary,
+    ObjectVector &objectlist_secondary);
+
+  /**
+   * @brief removes duplicate objects from two lists based on their distance
+   * if distance is smaller than 0.02m, the object from the secondary list is removed
+   * 
+   * @param objectlist_combined combined list of objects. This list will be modified.
+   * @param objectlist_primary primary list of objects
+   * @param objectlist_secondary secondary list of objects
+   */
+  void filterDuplicatesByDistance(
+    ObjectVector &objectlist_combined,
+    const ObjectVector &objectlist_primary,
+    const ObjectVector &objectlist_secondary);
 };
 
 #endif // WORLD_MODEL_HPP
