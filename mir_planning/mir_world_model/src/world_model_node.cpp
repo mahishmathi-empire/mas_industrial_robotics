@@ -117,8 +117,26 @@ WorldModelNode::objectListCallback(
 
   // update world model
   for (auto& object : msg->objects) {
-    world_model_->addObjectToWorkstation(
-      msg->workstation_name, object.name, object.database_id, object.pose);
+    world_model_->addObjectToWorkstation(msg->workstation_name,
+                                         object.name,
+                                         object.database_id,
+                                         object.pose,
+                                         this->now());
+  }
+
+  std::cout << "------------------" << std::endl;
+
+  // print world model
+  std::vector<Workstation> workstations = world_model_->getAllWorkstations();
+  for (auto& workstation : workstations) {
+    std::vector<std::string> objects =
+      world_model_->getWorkstationObjects(workstation.name);
+    std::string objects_string = "";
+    for (auto& object : objects) {
+      objects_string += object + ", ";
+    }
+    RCLCPP_INFO(get_logger(), "Workstation %s: %s",
+                workstation.name.c_str(), objects_string.c_str());
   }
 }
 

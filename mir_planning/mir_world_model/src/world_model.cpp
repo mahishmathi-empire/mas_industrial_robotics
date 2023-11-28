@@ -20,10 +20,10 @@ WorldModel::addWorkstation(
   const std::string &type, 
   const double &height)
 {
-  Workstation workstation;
-  workstation.name = name;
-  workstation.type = workstation_type_map[type];
-  workstation.height = height;
+  mir_interfaces::msg::Workstation workstation;
+  workstation.workstation_name = name;
+  workstation.workstation_type = type;
+  workstation.workstation_height = height;
   workstations_[name] = workstation; // add workstation to map
 }
 
@@ -42,7 +42,8 @@ WorldModel::addObjectToWorkstation(
   ObjectVector objects_from_pcl;
 
   std::string &workstation_name = object_list->workstation_name;
-  ObjectVector workstation_objects = getWorkstationObjects(workstation_name); ;
+  ObjectVector workstation_objects;
+  getWorkstationObjects(workstation_name, workstation_objects);
 
   for (auto object : object_list->objects)
   {
@@ -96,29 +97,27 @@ WorldModel::removeObjectFromWorkstation(
 }
 
 
-ObjectVector
+void
 WorldModel::getWorkstationObjects(
-  const std::string &workstation_name)
+  const std::string &workstation_name, ObjectVector &objects)
 {
-  return workstations_[workstation_name].objects;
+  objects = workstations_[workstation_name].objects;
 }
 
-std::vector<Workstation> 
-WorldModel::getAllWorkstations()
+void 
+WorldModel::getAllWorkstations(std::vector<mir_interfaces::msg::Workstation> &workstations)
 {
-  std::vector<Workstation> workstations;
   for (auto const& workstation : workstations_)
   {
-    workstations.push_back(workstation);
+    workstations.push_back(workstation.second);
   }
-  return workstations;
 }
 
 int 
 WorldModel::getWorkstationHeight(
   const std::string &workstation_name)
 {
-  return workstations_[workstation_name].height;
+  return workstations_[workstation_name].workstation_height;
 }
 
 ObjectVector 

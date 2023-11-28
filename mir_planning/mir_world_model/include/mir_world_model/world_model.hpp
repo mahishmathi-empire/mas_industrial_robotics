@@ -14,9 +14,11 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+#include "rclcpp/time.hpp"
+
 #include "mir_interfaces/msg/object_list.hpp"
 #include "mir_interfaces/msg/object.hpp"
-#include "mir_interfaces/msg/Workstation.hpp"
+#include "mir_interfaces/msg/workstation.hpp"
 
 class WorldModel
 {
@@ -27,7 +29,7 @@ public:
 
 private:
   // ============================ Members ============================
-  std::map<std::string, Workstation> workstations_;
+  std::map<std::string, mir_interfaces::msg::Workstation> workstations_;
 
 public:
   typedef std::vector<mir_interfaces::msg::Object> ObjectVector;
@@ -76,13 +78,14 @@ public:
    * 
    * @param workstation_name name of the workstation
   */
-  std::vector<mir_interfaces::msg::WorldModelObject> getWorkstationObjects(
-    const std::string &workstation_name);
+  void getWorkstationObjects(
+    const std::string &workstation_name, ObjectVector &objects);
 
   /**
    * @brief gets all workstations
   */
-  std::vector<mir_interfaces::msg::Workstation> getAllWorkstations();
+  void getAllWorkstations(
+    std::vector<mir_interfaces::msg::Workstation> &workstations);
 
   /**
    * @brief gets the height of a workstation
