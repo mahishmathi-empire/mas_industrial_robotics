@@ -79,7 +79,7 @@ public:
    * 
    * @param workstation_name name of the workstation
   */
-  void getWorkstationObjects(
+  void getAllObjects(
     const std::string &workstation_name, ObjectVector &objects);
 
   /**

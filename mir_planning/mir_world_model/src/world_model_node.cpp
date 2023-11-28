@@ -211,9 +211,9 @@ WorldModelNode::objectListCallback(
   world_model_->getAllWorkstations(workstations);
   for (auto& workstation : workstations) {
     WorldModel::ObjectVector objects;
-    world_model_->getWorkstationObjects(workstation.workstation_name, objects);
+    world_model_->getAllObjects(workstation.name, objects);
     
-    std::cout << "Workstation: " << workstation.workstation_name << std::endl;
+    std::cout << "Workstation: " << workstation.name << std::endl;
     for (auto& object : objects) {
       std::cout << "  Object: " << object.name << " ID: " << object.database_id << std::endl;
     }
