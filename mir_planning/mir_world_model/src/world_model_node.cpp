@@ -57,6 +57,21 @@ WorldModelNode::on_activate(const rclcpp_lifecycle::State& state)
       std::bind(
         &WorldModelNode::objectListCallback, this, std::placeholders::_1));
 
+  // create action server
+  object_selector_action_server_ =
+    rclcpp_action::create_server<mir_interfaces::action::ObjectSelector>(
+      shared_from_this(),
+      "~/object_selector",
+      std::bind(
+        &WorldModelNode::objectSelectorHandleCallback, this, std::placeholders::_1,
+        std::placeholders::_2),
+      std::bind(
+        &WorldModelNode::objectSelectorCancelCallback, this,
+        std::placeholders::_1),
+      std::bind(
+        &WorldModelNode::objectSelectorAcceptedCallback, this,
+        std::placeholders::_1));
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
 }
@@ -67,9 +82,6 @@ WorldModelNode::on_deactivate(const rclcpp_lifecycle::State& state)
   RCLCPP_INFO(get_logger(), "WorldModelNode deactivated");
 
   LifecycleNode::on_deactivate(state);
-
-  // shutdown subscribers
-  object_list_subscriber_.reset();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
@@ -84,6 +96,9 @@ WorldModelNode::on_cleanup(const rclcpp_lifecycle::State& state)
 
   // destroy subscribers
   object_list_subscriber_.reset();
+  
+  // destroy action server
+  object_selector_action_server_.reset();
 
   // destroy world model
   world_model_.reset();
@@ -102,11 +117,82 @@ WorldModelNode::on_shutdown(const rclcpp_lifecycle::State& state)
   // delete subscribers
   delete object_list_subscriber_.get();
 
+  // delete action server
+  delete object_selector_action_server_.get();
+
   // destroy world model
   delete world_model_.get();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::
     CallbackReturn::SUCCESS;
+}
+
+rclcpp_action::GoalResponse
+WorldModelNode::objectSelectorHandleCallback(
+  const rclcpp_action::GoalUUID& uuid,
+  std::shared_ptr<const mir_interfaces::action::ObjectSelector::Goal> goal)
+{
+  RCLCPP_INFO(get_logger(), "WorldModelNode received object selector goal");
+
+  // check if goal is valid
+  if (goal->obj_name.empty()) {
+    return rclcpp_action::GoalResponse::REJECT;
+  }
+  (void)uuid;
+  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse
+WorldModelNode::objectSelectorCancelCallback(
+  const std::shared_ptr<rclcpp_action::ServerGoalHandle<
+    mir_interfaces::action::ObjectSelector>> goal_handle)
+{
+  RCLCPP_INFO(get_logger(), "WorldModelNode received request to cancel goal");
+  (void)goal_handle;
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void
+WorldModelNode::objectSelectorAcceptedCallback(
+  const std::shared_ptr<rclcpp_action::ServerGoalHandle<
+    mir_interfaces::action::ObjectSelector>> goal_handle)
+{
+  RCLCPP_INFO(get_logger(), "WorldModelNode accepted object selector goal");
+
+  // this needs to return quickly to avoid blocking the executor, so spin up a
+  // new thread
+  std::thread{std::bind(&WorldModelNode::executeObjectSelector, this, std::placeholders::_1), goal_handle}.detach();
+}
+
+void
+WorldModelNode::executeObjectSelector(
+  const std::shared_ptr<rclcpp_action::ServerGoalHandle<
+    mir_interfaces::action::ObjectSelector>> goal_handle)
+{
+  RCLCPP_INFO(get_logger(), "WorldModelNode executing object selector goal");
+
+  // helper variables
+  const auto goal = goal_handle->get_goal();
+  auto result = std::make_shared<mir_interfaces::action::ObjectSelector::Result>();
+
+  // get object from world model
+  mir_interfaces::msg::Object object;
+  world_model_->getWorkstationObject(goal->workstation_name, goal->obj_name, object);
+
+  if (object.name.empty()) {
+    RCLCPP_ERROR(get_logger(), "Object not found");
+    result->success = false;
+    goal_handle->abort(result);
+    return;
+  }
+
+  // check if goal is done
+  if (rclcpp::ok()) {
+    result->success = true;
+    result->obj = object;
+    goal_handle->succeed(result);
+    RCLCPP_INFO(get_logger(), "Object selector goal succeeded");
+  }
 }
 
 void
@@ -116,27 +202,21 @@ WorldModelNode::objectListCallback(
   RCLCPP_INFO(get_logger(), "WorldModelNode received object list");
 
   // update world model
-  for (auto& object : msg->objects) {
-    world_model_->addObjectToWorkstation(msg->workstation_name,
-                                         object.name,
-                                         object.database_id,
-                                         object.pose,
-                                         this->now());
-  }
+  world_model_->addObjectToWorkstation(msg);
 
   std::cout << "------------------" << std::endl;
 
   // print world model
-  std::vector<Workstation> workstations = world_model_->getAllWorkstations();
+  std::vector<mir_interfaces::msg::Workstation> workstations;
+  world_model_->getAllWorkstations(workstations);
   for (auto& workstation : workstations) {
-    std::vector<std::string> objects =
-      world_model_->getWorkstationObjects(workstation.name);
-    std::string objects_string = "";
+    WorldModel::ObjectVector objects;
+    world_model_->getWorkstationObjects(workstation.workstation_name, objects);
+    
+    std::cout << "Workstation: " << workstation.workstation_name << std::endl;
     for (auto& object : objects) {
-      objects_string += object + ", ";
+      std::cout << "  Object: " << object.name << " ID: " << object.database_id << std::endl;
     }
-    RCLCPP_INFO(get_logger(), "Workstation %s: %s",
-                workstation.name.c_str(), objects_string.c_str());
   }
 }
 
