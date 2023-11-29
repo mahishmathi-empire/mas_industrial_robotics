@@ -645,9 +645,6 @@ MultiModalObjectRecognitionROS::execute_goal(
     current_goal_handle_.reset();
   }
 
-  // lock data to prevent other goals from using it
-  data_lock_.lock();
-
   if (pointcloud_msg_ == nullptr || image_msg_ == nullptr) {
     RCLCPP_WARN(get_logger(),
                 "Skipping goal because no data has been received yet");
@@ -656,6 +653,9 @@ MultiModalObjectRecognitionROS::execute_goal(
     current_goal_handle_.reset();
     return;
   }
+
+  // lock data to prevent other goals from using it
+  data_lock_.lock();
 
   // pre-process the pointcloud
   this->preprocessPointCloud(pointcloud_msg_);
@@ -673,6 +673,10 @@ MultiModalObjectRecognitionROS::execute_goal(
   recognized_cloud_list_.objects.clear();
 
   scene_segmentation_ros_->resetCloudAccumulation();
+
+  // reset cloud and image
+  pointcloud_msg_ = nullptr;
+  image_msg_ = nullptr;
 
   // unlock data so that other goals can use it
   data_lock_.unlock();
