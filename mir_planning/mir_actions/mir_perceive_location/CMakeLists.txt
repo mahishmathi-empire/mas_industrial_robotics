@@ -26,7 +26,14 @@ set(dependencies
   mir_interfaces
 )
 
-add_executable(perceive_location src/perceive_location.cpp)
+include_directories(
+  include
+)
+
+add_executable(perceive_location
+  src/perceive_location.cpp
+  src/perceive_location_test.cpp
+)
 
 ament_target_dependencies(perceive_location
   ${dependencies}

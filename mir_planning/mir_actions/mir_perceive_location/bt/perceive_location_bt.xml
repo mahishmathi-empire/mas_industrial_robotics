@@ -1,11 +1,9 @@
-<root BTCPP_format="4" >
+<root BTCPP_format="4">
 
-  <include path="bt.xml"/>
-
-  <BehaviorTree ID="MainTree">
-      <Sequence name="root">
-          <Action ID="PerceiveLocationAction" name="action_1" message="m1"/>
-          <!-- <SubTree ID="ST_Test" /> -->
-      </Sequence>
+  <BehaviorTree ID="PerceiveLocationTree">
+    <Sequence>
+      <Action ID="PerceiveLocationAction" name="perceive_location_action"
+        workstation_name="{ws_name}" />
+    </Sequence>
   </BehaviorTree>
 </root>
