@@ -1,0 +1,9 @@
+<root BTCPP_format="4">
+
+  <BehaviorTree ID="PickObjectTree">
+    <Sequence>
+      <Action ID="PickObjectAction" name="pick_obj_action" workstation_name="{ws_name}"
+        object_name="{obj_name}" />
+    </Sequence>
+  </BehaviorTree>
+</root>
