@@ -113,15 +113,16 @@ WorldModel::getWorkstationObject(
     const std::string &object_name,
     mir_interfaces::msg::Object &object)
 {
-    ObjectVector &workstation_objects = workstations_[workstation_name].objects;
-    for (auto const &workstation_object : workstation_objects)
+  ObjectVector &workstation_objects = workstations_[workstation_name].objects;
+  for (auto it = workstation_objects.begin(); it != workstation_objects.end(); ++it)
+  {
+    if (it->name == object_name)
     {
-        if (workstation_object.name == object_name)
-        {
-            object = workstation_object;
-            return;
-        }
+      object = *it;
+      workstation_objects.erase(it);
+      break;
     }
+  }
 }
 
 void 

@@ -203,21 +203,6 @@ WorldModelNode::objectListCallback(
 
   // update world model
   world_model_->addObjectToWorkstation(msg);
-
-  std::cout << "------------------" << std::endl;
-
-  // print world model
-  std::vector<mir_interfaces::msg::Workstation> workstations;
-  world_model_->getAllWorkstations(workstations);
-  for (auto& workstation : workstations) {
-    WorldModel::ObjectVector objects;
-    world_model_->getAllObjects(workstation.name, objects);
-    
-    std::cout << "Workstation: " << workstation.name << std::endl;
-    for (auto& object : objects) {
-      std::cout << "  Object: " << object.name << " ID: " << object.database_id << std::endl;
-    }
-  }
 }
 
 // Register the component with class_loader
