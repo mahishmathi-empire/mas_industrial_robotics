@@ -7,8 +7,8 @@
       <Sequence>
         <Script code="ws_name:='WS00'" />
         <Script code="obj_name:='AXIS'" />
-        <SubTree ID="PerceiveLocationTree" />
-        <SubTree ID="ST_Test" /> 
+        <SubTree ID="PerceiveLocationTree" ws_name="{ws_name}" />
+        <SubTree ID="PickObjectTree" ws_name="{ws_name}" obj_name="{obj_name}" />
       </Sequence>
   </BehaviorTree>
 </root>

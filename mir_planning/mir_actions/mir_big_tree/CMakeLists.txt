@@ -26,6 +26,8 @@ set(dependencies
   behaviortree_cpp
   std_msgs
   mir_interfaces
+  # mir_perceive_location
+  # mir_pick_object
 )
 
 include_directories(
@@ -43,7 +45,8 @@ ament_target_dependencies(big_tree
 )
 
 target_link_libraries(big_tree
-  perceive_location_lib
+  mir_pick_object::pick_object_lib
+  mir_perceive_location::perceive_location_lib
 )
 
 install(TARGETS

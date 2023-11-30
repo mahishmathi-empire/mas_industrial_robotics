@@ -49,7 +49,7 @@ ament_target_dependencies(perceive_location
 
 install(
   DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
+  DESTINATION include
 )
 
 install(TARGETS perceive_location perceive_location_lib
@@ -65,6 +65,9 @@ install(DIRECTORY
  DESTINATION share/${PROJECT_NAME}/bt
 )
 
+ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
+ament_export_targets(perceive_location_lib HAS_LIBRARY_TARGET)
+
 
 ament_package()

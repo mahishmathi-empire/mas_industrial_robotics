@@ -30,6 +30,14 @@ include_directories(
   include
 )
 
+add_library(pick_object_lib SHARED
+  src/pick_object.cpp
+)
+
+ament_target_dependencies(pick_object_lib
+  ${dependencies}
+)
+
 add_executable(pick_object
   src/pick_object.cpp
   src/pick_object_test.cpp
@@ -39,9 +47,17 @@ ament_target_dependencies(pick_object
   ${dependencies}
 )
 
-install(TARGETS
-  pick_object
-  DESTINATION lib/${PROJECT_NAME}
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+install(TARGETS pick_object pick_object_lib
+  EXPORT pick_object_lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  DESTINATION include
 )
 
 install(DIRECTORY
@@ -49,6 +65,8 @@ install(DIRECTORY
  DESTINATION share/${PROJECT_NAME}/bt
 )
 
+ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
+ament_export_targets(pick_object_lib HAS_LIBRARY_TARGET)
 
 ament_package()
