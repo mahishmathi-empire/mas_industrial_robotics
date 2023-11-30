@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(mir_perceive_location)
+project(mir_big_tree)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -17,6 +17,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mir_interfaces REQUIRED)
+find_package(mir_perceive_location REQUIRED)
+find_package(mir_pick_object REQUIRED)
 
 set(dependencies
   rclcpp
@@ -28,36 +30,25 @@ set(dependencies
 
 include_directories(
   include
+  ${mir_perceive_location_INCLUDE_DIRS}
+  ${mir_pick_object_INCLUDE_DIRS}
 )
 
-add_library(perceive_location_lib SHARED
-  src/perceive_location.cpp
+add_executable(big_tree 
+  src/big_tree.cpp
 )
 
-ament_target_dependencies(perceive_location_lib
+ament_target_dependencies(big_tree
   ${dependencies}
 )
 
-add_executable(perceive_location
-  src/perceive_location.cpp
-  src/perceive_location_test.cpp
+target_link_libraries(big_tree
+  perceive_location_lib
 )
 
-ament_target_dependencies(perceive_location
-  ${dependencies}
-)
-
-install(
-  DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
-)
-
-install(TARGETS perceive_location perceive_location_lib
-  EXPORT perceive_location_lib
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  DESTINATION include
+install(TARGETS
+  big_tree
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY

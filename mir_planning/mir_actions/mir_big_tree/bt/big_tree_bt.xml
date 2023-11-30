@@ -1,0 +1,14 @@
+<root BTCPP_format="4" >
+
+  <include ros_pkg="mir_perceive_location"  path="bt/perceive_location_bt.xml"/>
+  <include ros_pkg="mir_pick_object"  path="bt/pick_object_bt.xml"/>
+
+  <BehaviorTree ID="MainTree">
+      <Sequence>
+        <Script code="ws_name:='WS00'" />
+        <Script code="obj_name:='AXIS'" />
+        <SubTree ID="PerceiveLocationTree" />
+        <SubTree ID="ST_Test" /> 
+      </Sequence>
+  </BehaviorTree>
+</root>
