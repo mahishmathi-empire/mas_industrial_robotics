@@ -40,7 +40,7 @@ main(int argc, char** argv)
     // do NOT use other sleep functions!
     // Small sleep time is OK, here we use a large one only to
     // have less messages on the console.
-    tree.sleep(std::chrono::milliseconds(100));
+    tree.sleep(std::chrono::milliseconds(1));
 
     // spin
     rclcpp::spin_some(node);

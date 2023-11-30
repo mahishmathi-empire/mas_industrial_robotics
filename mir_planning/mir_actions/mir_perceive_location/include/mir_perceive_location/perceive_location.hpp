@@ -43,6 +43,8 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> _node;
 
+  bool isGoalAccepted = false;
+
   // action client
   rclcpp_action::Client<mir_interfaces::action::ObjectDetection>::SharedPtr
     _action_client;

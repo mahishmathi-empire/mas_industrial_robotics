@@ -72,19 +72,77 @@ PickObjectAction::onStart()
 BT::NodeStatus
 PickObjectAction::onRunning()
 {
-  // spin
-  auto ret = rclcpp::spin_until_future_complete(
-    _node, goal_handle_future, std::chrono::milliseconds(100));
+  if (!isGoalAccepted) {
+    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: waiting for goal");
 
-  if (ret != rclcpp::FutureReturnCode::SUCCESS) {
-    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: goal not succ");
-    return BT::NodeStatus::RUNNING;
-  } else {
-    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: goal succ");
+    // spin
+    auto ret = rclcpp::spin_until_future_complete(
+      _node, goal_handle_future, std::chrono::milliseconds(1));
 
-    // TODO: get the result fucking somehow
-    
+    if (ret != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_INFO(_node->get_logger(), "PickObjectAction: goal not accepted");
+      return BT::NodeStatus::RUNNING;
+    } else {
+      RCLCPP_INFO(_node->get_logger(), "PickObjectAction: goal accepted");
+      isGoalAccepted = true;
     }
+  }
+
+  rclcpp_action::ClientGoalHandle<
+    mir_interfaces::action::ObjectSelector>::SharedPtr goal_handle =
+    goal_handle_future.get();
+  if (!goal_handle) {
+    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: goal rejected");
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // Wait for the server to be done with the goal
+  auto result_future = _action_client->async_get_result(goal_handle);
+
+  RCLCPP_INFO(_node->get_logger(), "Waiting for result");
+  if (rclcpp::spin_until_future_complete(
+        _node, result_future, std::chrono::milliseconds(1)) ==
+      rclcpp::FutureReturnCode::TIMEOUT) {
+    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: action server timeout");
+    return BT::NodeStatus::RUNNING;
+  } else if (rclcpp::spin_until_future_complete(
+               _node, result_future, std::chrono::milliseconds(1)) !=
+             rclcpp::FutureReturnCode::SUCCESS) {
+    RCLCPP_INFO(_node->get_logger(), "PickObjectAction: action server error");
+    return BT::NodeStatus::FAILURE;
+  }
+
+  rclcpp_action::ClientGoalHandle<
+    mir_interfaces::action::ObjectSelector>::WrappedResult wrapped_result =
+    result_future.get();
+
+  switch (wrapped_result.code) {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(_node->get_logger(), "Goal was aborted");
+      return BT::NodeStatus::FAILURE;
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_ERROR(_node->get_logger(), "Goal was canceled");
+      return BT::NodeStatus::FAILURE;
+    default:
+      RCLCPP_ERROR(_node->get_logger(), "Unknown result code");
+      return BT::NodeStatus::FAILURE;
+  }
+
+  RCLCPP_INFO(_node->get_logger(), "result received");
+
+  auto succ = wrapped_result.result->success;
+
+  if (!succ) {
+    RCLCPP_ERROR(_node->get_logger(), "PickObjectAction: object not found");
+    return BT::NodeStatus::FAILURE;
+  }
+  auto obj_name = wrapped_result.result->obj.name;
+
+  RCLCPP_INFO(_node->get_logger(),
+              "PickObjectAction: object %s picked",
+              obj_name.c_str());
 
   return BT::NodeStatus::SUCCESS;
 }

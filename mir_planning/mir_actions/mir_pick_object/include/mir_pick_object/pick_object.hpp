@@ -44,6 +44,8 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> _node;
 
+  bool isGoalAccepted = false;
+
   // action client
   rclcpp_action::Client<mir_interfaces::action::ObjectSelector>::SharedPtr
     _action_client;

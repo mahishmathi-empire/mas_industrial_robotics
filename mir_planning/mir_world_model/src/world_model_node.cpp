@@ -182,7 +182,7 @@ WorldModelNode::executeObjectSelector(
   if (object.name.empty()) {
     RCLCPP_ERROR(get_logger(), "Object not found");
     result->success = false;
-    goal_handle->abort(result);
+    goal_handle->succeed(result);
     return;
   }
 
