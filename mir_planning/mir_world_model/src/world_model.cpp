@@ -184,32 +184,31 @@ WorldModel::filterDuplicatesByDistance(
   ObjectVector &objectlist_primary,
   ObjectVector &objectlist_secondary)
 {
-  ObjectVector objectlist_new;
-  for (auto const& object_secondary : objectlist_secondary)
+  //log
+  std::cout << "Filtering duplicates by distance - 2param ver" << std::endl;
+
+  // write code to iterate through the objectlist_secondary and remove duplicates from objectlist_primary
+  for (auto it = objectlist_secondary.begin(); it != objectlist_secondary.end(); ++it)
   {
-    bool duplicate = false;
-    for (auto const& object_primary : objectlist_primary)
+    for (auto it = objectlist_primary.begin(); it != objectlist_primary.end(); ++it)
     {
       float distance = sqrt(
-        pow(object_primary.pose.pose.position.x - object_secondary.pose.pose.position.x, 2) +
-        pow(object_primary.pose.pose.position.y - object_secondary.pose.pose.position.y, 2));
+        pow(it->pose.pose.position.x - it->pose.pose.position.x, 2) +
+        pow(it->pose.pose.position.y - it->pose.pose.position.y, 2));
 
       if (distance < 0.02)
       {
-        duplicate = true;
+        //log
+        std::cout << "Duplicate found" << std::endl;
+        objectlist_primary.erase(it);
         break;
       }
-
-    }
-    if (!duplicate)
-    {
-      objectlist_new.push_back(object_secondary);
     }
   }
-  // return the objectlist_combined + objectlist_primary
+
+  //add all objects from objectlist_secondary to objectlist_primary
   objectlist_primary.insert(
     objectlist_primary.end(), 
-    objectlist_new.begin(), 
-    objectlist_new.end());
-
+    objectlist_secondary.begin(), 
+    objectlist_secondary.end());
 }
