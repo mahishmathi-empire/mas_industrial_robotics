@@ -1,5 +1,5 @@
-#ifndef MIR_PICK_OBJECT__PICK_OBJECT_HPP_
-#define MIR_PICK_OBJECT__PICK_OBJECT_HPP_
+#ifndef MIR_PICK_OBJECT__SELECT_OBJECT_HPP_
+#define MIR_PICK_OBJECT__SELECT_OBJECT_HPP_
 
 #include "behaviortree_cpp/behavior_tree.h"
 #include "behaviortree_cpp/bt_factory.h"
@@ -15,19 +15,19 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include "rclcpp_action/rclcpp_action.hpp"
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/string.hpp>
 
-#include "mir_interfaces/action/object_selector.hpp"
+#include "mir_interfaces/action/object_detection.hpp"
 
-class PickObjectAction : public BT::StatefulActionNode
+class SelectObjectAction : public BT::StatefulActionNode
 {
 public:
-  PickObjectAction(const std::string& name,
-                   const BT::NodeConfiguration& config,
-                   const std::shared_ptr<rclcpp::Node>& node);
+  SelectObjectAction(const std::string& name,
+                         const BT::NodeConfiguration& config,
+                         const std::shared_ptr<rclcpp::Node>& node);
 
   static BT::PortsList providedPorts();
 
@@ -44,16 +44,6 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> _node;
 
-  bool isGoalAccepted = false;
-
-  // action client
-  rclcpp_action::Client<mir_interfaces::action::ObjectSelector>::SharedPtr
-    _action_client;
-
-  // future to store the goal handle
-  std::shared_future<rclcpp_action::ClientGoalHandle<
-    mir_interfaces::action::ObjectSelector>::SharedPtr>
-    goal_handle_future;
 };
 
-#endif // MIR_PICK_OBJECT__PICK_OBJECT_HPP_
+#endif  // MIR_PICK_OBJECT__SELECT_OBJECT_HPP_

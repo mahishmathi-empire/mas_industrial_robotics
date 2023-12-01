@@ -1,4 +1,11 @@
 #include "mir_pick_object/pick_object.hpp"
+#include "mir_pick_object/select_object.hpp"
+#include "mir_common_actions/align_to_pose.hpp"
+#include "mir_common_actions/grasp_action.hpp"
+#include "mir_common_actions/verify_grasp_action.hpp"
+#include "mir_common_actions/move_arm.hpp"
+#include "mir_common_actions/move_arm_to_pose.hpp"
+#include "mir_perceive_location/perceive_location.hpp"
 
 int
 main(int argc, char** argv)
@@ -10,7 +17,15 @@ main(int argc, char** argv)
 
   BT::BehaviorTreeFactory factory;
 
-  factory.registerNodeType<PickObjectAction>("PickObjectAction", node);
+  // register all actions
+  factory.registerNodeType<SelectObjectAction>("SelectObjectAction", node);
+  factory.registerNodeType<AlignToPoseAction>("AlignToPoseAction", node);
+  factory.registerNodeType<PerceiveLocationAction>("PerceiveLocationAction", node);
+  factory.registerNodeType<MoveArmToPoseAction>("MoveArmToPoseAction", node);
+  factory.registerNodeType<GraspAction>("GraspAction", node);
+  factory.registerNodeType<VerifyGraspAction>("VerifyGraspAction", node);
+  factory.registerNodeType<MoveArmAction>("MoveArmAction", node);
+  // factory.registerNodeType<PickObjectAction>("PickObjectAction", node);
 
   // get xml file
   std::string pkg_path =
