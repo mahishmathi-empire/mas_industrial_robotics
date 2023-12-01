@@ -26,14 +26,12 @@ set(dependencies
   behaviortree_cpp
   std_msgs
   mir_interfaces
-  # mir_perceive_location
-  # mir_pick_object
+  mir_perceive_location
+  mir_pick_object
 )
 
 include_directories(
   include
-  ${mir_perceive_location_INCLUDE_DIRS}
-  ${mir_pick_object_INCLUDE_DIRS}
 )
 
 add_executable(big_tree 
@@ -42,11 +40,6 @@ add_executable(big_tree
 
 ament_target_dependencies(big_tree
   ${dependencies}
-)
-
-target_link_libraries(big_tree
-  mir_pick_object::pick_object_lib
-  mir_perceive_location::perceive_location_lib
 )
 
 install(TARGETS

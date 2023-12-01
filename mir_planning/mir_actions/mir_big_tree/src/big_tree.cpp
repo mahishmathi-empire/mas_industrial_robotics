@@ -1,5 +1,9 @@
 #include "mir_big_tree/big_tree.hpp"
 
+#include "behaviortree_cpp/loggers/groot2_publisher.h"
+
+#include <fstream>
+
 int
 main(int argc, char** argv)
 {
@@ -13,6 +17,8 @@ main(int argc, char** argv)
   // register actions
   factory.registerNodeType<PerceiveLocationAction>("PerceiveLocationAction", node);
   factory.registerNodeType<PickObjectAction>("PickObjectAction", node);
+
+  std::string xml_models = BT::writeTreeNodesModelXML(factory);
 
   // get xml file
   std::string pkg_path =
@@ -28,6 +34,13 @@ main(int argc, char** argv)
   }
 
   BT::Tree tree = factory.createTree("MainTree");
+
+  std::cout << "----------- XML file  ----------\n"
+            << BT::WriteTreeToXML(tree, false, false)
+            << "--------------------------------\n";
+
+  const unsigned port = 1667;
+  BT::Groot2Publisher publisher(tree, port);
 
   // tick the root of the tree
   // tree.tickWhileRunning();

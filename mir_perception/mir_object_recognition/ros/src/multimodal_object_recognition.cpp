@@ -692,6 +692,9 @@ MultiModalObjectRecognitionROS::execute_goal(
   // unlock data so that other goals can use it
   data_lock_.unlock();
 
+  // TODO: check if there are any objects in the object list
+  // if not, return false else return true
+
   if (rclcpp::ok()) {
     result->result = true;
     goal_handle->succeed(result);
