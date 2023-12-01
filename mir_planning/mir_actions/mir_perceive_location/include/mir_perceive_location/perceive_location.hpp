@@ -1,4 +1,5 @@
-// bethavior tree example
+#ifndef MIR_PERCEIVE_LOCATION__PERCEIVE_LOCATION_HPP_
+#define MIR_PERCEIVE_LOCATION__PERCEIVE_LOCATION_HPP_
 
 #include "behaviortree_cpp/behavior_tree.h"
 #include "behaviortree_cpp/bt_factory.h"
@@ -14,7 +15,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include "rclcpp_action/rclcpp_action.hpp"
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/string.hpp>
@@ -54,3 +55,5 @@ private:
     mir_interfaces::action::ObjectDetection>::SharedPtr>
     goal_handle_future;
 };
+
+#endif  // MIR_PERCEIVE_LOCATION__PERCEIVE_LOCATION_HPP_

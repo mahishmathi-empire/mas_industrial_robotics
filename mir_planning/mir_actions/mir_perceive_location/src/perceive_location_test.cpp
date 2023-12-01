@@ -1,9 +1,23 @@
 #include "mir_perceive_location/perceive_location.hpp"
+#include "mir_common_actions/check_if_base_centered.hpp"
+#include "mir_common_actions/move_arm_to_pose.hpp"
+#include "mir_common_actions/grasp_action.hpp"
+#include "mir_move_base_safe/move_base_safe.hpp"
 
 int
 main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
+
+  // get string from input arguments
+  if (argc < 2) {
+    std::cerr << "usage: " << argv[0] << " <location>\n";
+    return 1;
+  }
+
+  std::string location = argv[1];
+
+  std::cout << "location: " << location << "\n";
 
   // create a node
   auto node = std::make_shared<rclcpp::Node>("PerceiveLocationAction");
@@ -12,6 +26,15 @@ main(int argc, char** argv)
 
   factory.registerNodeType<PerceiveLocationAction>("PerceiveLocationAction",
                                                    node);
+
+  factory.registerNodeType<CheckIfBaseCenteredAction>("CheckIfBaseCenteredAction",
+                                                      node);
+
+  factory.registerNodeType<MoveBaseSafeAction>("MirMoveBaseSafeAction", node);
+
+  factory.registerNodeType<MoveArmToPoseAction>("MoveArmToPoseAction", node);
+
+  factory.registerNodeType<GraspAction>("GraspAction", node);
 
   // get xml file
   std::string pkg_path =

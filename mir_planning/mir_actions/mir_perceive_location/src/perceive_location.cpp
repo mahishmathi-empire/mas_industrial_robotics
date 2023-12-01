@@ -67,14 +67,16 @@ BT::NodeStatus
 PerceiveLocationAction::onRunning()
 {
   if (!isGoalAccepted) {
-    RCLCPP_INFO(_node->get_logger(), "PerceiveLocationAction: waiting for goal");
+    RCLCPP_INFO(_node->get_logger(),
+                "PerceiveLocationAction: waiting for goal");
 
     // spin
     auto ret = rclcpp::spin_until_future_complete(
       _node, goal_handle_future, std::chrono::milliseconds(1));
 
     if (ret != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_INFO(_node->get_logger(), "PerceiveLocationAction: goal not accepted");
+      RCLCPP_INFO(_node->get_logger(),
+                  "PerceiveLocationAction: goal not accepted");
       return BT::NodeStatus::RUNNING;
     } else {
       RCLCPP_INFO(_node->get_logger(), "PerceiveLocationAction: goal accepted");
@@ -97,12 +99,14 @@ PerceiveLocationAction::onRunning()
   if (rclcpp::spin_until_future_complete(
         _node, result_future, std::chrono::milliseconds(1)) ==
       rclcpp::FutureReturnCode::TIMEOUT) {
-    RCLCPP_INFO(_node->get_logger(), "PerceiveLocationAction: action server timeout");
+    RCLCPP_INFO(_node->get_logger(),
+                "PerceiveLocationAction: action server timeout");
     return BT::NodeStatus::RUNNING;
   } else if (rclcpp::spin_until_future_complete(
                _node, result_future, std::chrono::milliseconds(1)) !=
              rclcpp::FutureReturnCode::SUCCESS) {
-    RCLCPP_INFO(_node->get_logger(), "PerceiveLocationAction: action server error");
+    RCLCPP_INFO(_node->get_logger(),
+                "PerceiveLocationAction: action server error");
     return BT::NodeStatus::FAILURE;
   }
 

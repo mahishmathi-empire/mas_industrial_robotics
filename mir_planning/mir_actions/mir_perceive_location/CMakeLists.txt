@@ -17,6 +17,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mir_interfaces REQUIRED)
+find_package(mir_common_actions REQUIRED)
+find_package(mir_move_base_safe REQUIRED)
 
 set(dependencies
   rclcpp
@@ -24,17 +26,19 @@ set(dependencies
   behaviortree_cpp
   std_msgs
   mir_interfaces
+  mir_common_actions
+  mir_move_base_safe
 )
 
 include_directories(
   include
 )
 
-add_library(perceive_location_lib SHARED
+add_library(${PROJECT_NAME} SHARED
   src/perceive_location.cpp
 )
 
-ament_target_dependencies(perceive_location_lib
+ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
 )
 
@@ -52,12 +56,12 @@ install(
   DESTINATION include
 )
 
-install(TARGETS perceive_location perceive_location_lib
-  EXPORT perceive_location_lib
+install(
+  TARGETS perceive_location ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-  DESTINATION include
+  INCLUDES DESTINATION include
 )
 
 install(DIRECTORY
@@ -67,7 +71,6 @@ install(DIRECTORY
 
 ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
-ament_export_targets(perceive_location_lib HAS_LIBRARY_TARGET)
-
+ament_export_libraries(${PROJECT_NAME})
 
 ament_package()
