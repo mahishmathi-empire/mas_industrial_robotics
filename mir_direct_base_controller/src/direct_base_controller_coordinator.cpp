@@ -7,7 +7,7 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
       baseFrame(get_parameter_or<std::string>("base_frame", "base_link"))
     //   useCollisionAvoidance(get_parameter_or<bool>("use_collision_avoidance", true)) 
 {
-    baseTwist = create_publisher<geometry_msgs::msg::Twist>("twist", 1);
+    baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
     target_pose_received = false;
     // collisionFilter = create_subscription<mcr_monitoring_msgs::msg::ComponentWisePoseErrorMonitorFeedback>("collision_filter", 1, std::bind(&DirectBaseControllerCoordinator::collisionFilterCallback, this, std::placeholders::_1));
