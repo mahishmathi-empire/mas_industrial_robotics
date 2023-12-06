@@ -30,7 +30,7 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     void DirectBaseControllerCoordinator::start() 
     {
         RCLCPP_INFO(get_logger(), "Ready to start...");
-        std::string state = "";
+        std::string state = "RUNNING";
 
         while (rclcpp::ok()) {
             if (state == "INIT") {
@@ -112,7 +112,10 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<DirectBaseControllerCoordinator>());
-  rclcpp::shutdown();
+  auto node = std::make_shared<DirectBaseControllerCoordinator>();
+//   rclcpp::spin(std::make_shared<DirectBaseControllerCoordinator>());
+    node->start();
+//   run_node.start();  
+//   rclcpp::shutdown();
   return 0;
 }
