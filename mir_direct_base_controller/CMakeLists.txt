@@ -15,6 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 
 add_executable(direct_base_controller 
@@ -36,6 +38,8 @@ ament_target_dependencies(direct_base_controller
 rclcpp 
 geometry_msgs
 tf2
+tf2_geometry_msgs
+tf2_ros
 )
 
 install(TARGETS
