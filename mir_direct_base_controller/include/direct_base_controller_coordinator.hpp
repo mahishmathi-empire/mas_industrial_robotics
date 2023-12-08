@@ -43,8 +43,8 @@ private:
 
     void publish_zero_state();
 
-    rclcpp::Rate loopRate;
-    rclcpp::Rate idleLoopRate;
+    // rclcpp::Rate loopRate;
+    // rclcpp::Rate idleLoopRate;
 
     std::string baseFrame;
     ControllerParameters constants;
