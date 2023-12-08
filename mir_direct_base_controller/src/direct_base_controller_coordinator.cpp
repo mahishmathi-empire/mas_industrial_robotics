@@ -119,7 +119,7 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     }
 
     void DirectBaseControllerCoordinator::publish_zero_state()
-    {15
+    {
         
         baseTwist->publish(zero_twist);
     }
