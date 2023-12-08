@@ -86,7 +86,7 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
                 // return "INIT";
             }
             ComponentWisePoseErrorMonitor monitor;
-            monitor.setParameters(0.1, 0.1, 0.1, 0.1, 0.1, 0.1);
+            monitor.setParameters(0.02, 0.02, 15, 15, 15, 0.04);
             if(monitor.isComponentWisePoseErrorWithinThreshold(error))
             {
                 RCLCPP_INFO(get_logger(), "error within threshold");
