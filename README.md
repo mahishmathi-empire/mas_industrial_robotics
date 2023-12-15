@@ -34,14 +34,7 @@
   ```bash
   cd ~/mir/src
 
-  vcs import < mas_industrial_robots/mir.repos
-  ```
-
-- Install the dependencies
-  ```bash
-  cd ~/mir
-
-  rosdep install --from-paths src -y --ignore-src
+  vcs import < mas_industrial_robotics/mir.repos
   ```
 
 - Build the workspace
