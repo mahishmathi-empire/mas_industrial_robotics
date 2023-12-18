@@ -20,13 +20,14 @@ find_package(tf2_ros REQUIRED)
 
 
 add_executable(direct_base_controller 
-  src/main.cpp
+  # src/main.cpp
   src/component_wise_pose_error_calculator.cpp
   src/twistsynchronizer.cpp
   src/twist_synchronizer_utils.cpp
   src/twist_limiter.cpp
   src/twist_controller.cpp
   src/component_wise_pose_error_monitor.cpp
+  src/direct_base_controller_coordinator.cpp
 )
 
 target_include_directories(direct_base_controller PUBLIC

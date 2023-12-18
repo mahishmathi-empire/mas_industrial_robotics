@@ -17,9 +17,9 @@ bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::Shared
   }
   geometry_msgs::msg::PoseStamped pose_out_;
   transform_pose(origin_pose, target_pose, tf_buffer_, pose_out_);
-  error.linear_x = target_pose->pose.position.x - origin_pose->pose.position.x;
-  error.linear_y = target_pose->pose.position.y - origin_pose->pose.position.y;
-  error.linear_z = target_pose->pose.position.z - origin_pose->pose.position.z;
+  error.linear_x = pose_out_.pose.position.x - origin_pose->pose.position.x;
+  error.linear_y = pose_out_.pose.position.y - origin_pose->pose.position.y;
+  error.linear_z = pose_out_.pose.position.z - origin_pose->pose.position.z;
 
   tf2::Quaternion q1(origin_pose->pose.orientation.x, origin_pose->pose.orientation.y, origin_pose->pose.orientation.z, origin_pose->pose.orientation.w);
   tf2::Quaternion q2(target_pose->pose.orientation.x, target_pose->pose.orientation.y, target_pose->pose.orientation.z, target_pose->pose.orientation.w);
@@ -51,10 +51,7 @@ bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_p
   }
   catch (const tf2::TransformException &ex)
   {
-    // Log the Error.
-    // RCLCPP_INFO(
-    //     this->get_logger(), "Could not transform %s to %s: %s",
-    //     toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+
     return false;
   }
   return false;
