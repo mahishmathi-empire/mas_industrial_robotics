@@ -56,6 +56,7 @@ from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 import tf_transformations as tr
 from scipy.spatial.transform import Rotation as R
 import time
+import threading
 
 class PPT_LifecycleTalker(Node):
 
@@ -71,13 +72,17 @@ class PPT_LifecycleTalker(Node):
 
         self.sub_img = None
         self.sub_point_cloud = None
+        self.image = None
+        self.pointcloud = None
         self.ts = None
         self.tf_buffer = None
+        self.cavity_pose_sent = False
         
         self.model = None
         self._action_server = None
         self.tf_listener = None
         self.goal_handle = None
+        self.data_lock_ = None
 
         super().__init__(node_name, **kwargs)
 
@@ -118,6 +123,7 @@ class PPT_LifecycleTalker(Node):
                                            self.execute_callback, 
                                            goal_callback=self.goal_callback,
                                            handle_accepted_callback=self.handle_accepted_callback)
+        self.data_lock_ = threading.Lock()
         
         return TransitionCallbackReturn.SUCCESS
 
@@ -138,6 +144,7 @@ class PPT_LifecycleTalker(Node):
         
         # synchronize image and point cloud
         self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_img, self.sub_point_cloud], queue_size=10, slop=0.1)
+        self.ts.registerCallback(self.time_sync_callback)
 
         # The default LifecycleNode callback is the one transitioning
         # LifecyclePublisher entities from inactive to enabled.
@@ -192,22 +199,69 @@ class PPT_LifecycleTalker(Node):
         return TransitionCallbackReturn.SUCCESS
     
     def execute_callback(self, goal_handle):
+        # acquire the lock
+        self.data_lock_.acquire()
         result = ObjectDetection.Result()
-        goal_handle.succeed()
-        result.result = True
+
+        if self.image:
+            try:
+                cv_img = self.cvbridge.imgmsg_to_cv2(self.image, "bgr8")
+                bboxes, probs, labels, predictions = self.yolo_detect(cv_img)
+                # Capatilize labels
+                labels = [label.upper() for label in labels]
+                print("labels: ", labels) 
+                
+                for bbox, prob, label in zip(bboxes, probs, labels):
+                    # TODO: Do this for all cavities. Use message type Cavity.
+                    if label == self.object_name:
+                        cavity_pose = self.get_cavity_pose(self.pointcloud, bbox)
+                        self.pub_pose.publish(cavity_pose)
+                        self.cavity_pose_sent = True
+                    else:
+                        continue
+                if self.debug:
+                    # Draw bounding boxes and labels of detections
+                    debug_img = predictions[0].plot()
+                    # publish bbox and label
+                    self.publish_debug_img(debug_img)
+                
+                goal_handle.succeed()
+                self.get_logger().info('Goal succeeded!')
+                
+            except CvBridgeError as e:
+                self.get_logger().error(e)
+        else:
+            self.get_logger().warn("No image received")
+            goal_handle.abort()
+        
+        # release the lock
+        self.data_lock_.release()
+        result.result = bool(self.cavity_pose_sent)
         return result
+
     
     def goal_callback(self, goal_request):
         """Accept or reject a client request to begin an action."""
+        if self.data_lock_.locked():
+            self.get_logger().info('Goal request rejected - action already in progress')
+            return GoalResponse.REJECT
         self.get_logger().info('Received goal request')
         return GoalResponse.ACCEPT
     
     def handle_accepted_callback(self, goal_handle):
         """Provide a handle to an accepted goal."""
-        self.get_logger().info('Deferring execution...')
-        self.goal_handle = goal_handle
-        self.ts.registerCallback(self.run2)
-    
+        self.get_logger().info('Execution of goal accepted')
+        self.goal_handle = goal_handle      
+        self.goal_handle.execute()
+
+    def time_sync_callback(self, image, pointcloud: PointCloud2):
+        """
+        image: image data of current frame with Image data type
+        pointcloud: pointcloud data of current frame with PointCloud2 data type
+        """
+        if not self.data_lock_.locked():
+            self.image = image
+            self.pointcloud = pointcloud
     
     def yolo_detect(self, cv_img):
         predictions = self.model.predict(source=cv_img,
@@ -267,7 +321,7 @@ class PPT_LifecycleTalker(Node):
         crp_pc = point_cloud2.create_cloud_xyz32(point_cloud.header, crp_cloud)
         
         try:
-            trans = self.tf_buffer.lookup_transform("map", point_cloud.header.frame_id, rclpy.time.Time())   
+            trans = self.tf_buffer.lookup_transform("base_link", point_cloud.header.frame_id, rclpy.time.Time())   
         except tf2_ros.TransformException as ex:
             self.get_logger().info(
                 f'Could not transform {"base_link"} to {point_cloud.header.frame_id}: {ex}')
@@ -346,43 +400,6 @@ class PPT_LifecycleTalker(Node):
         
         return pose
     
-    def run2(self, image, pointcloud: PointCloud2):
-        """
-        image: image data of current frame with Image data type
-        pointcloud: pointcloud data of current frame with PointCloud2 data type
-        """
-        print("entered run2")
-        if image:
-            try:
-                cv_img = self.cvbridge.imgmsg_to_cv2(image, "bgr8")
-                bboxes, probs, labels, predictions = self.yolo_detect(cv_img)
-                # Capatilize labels
-                labels = [label.upper() for label in labels]
-                print("labels: ", labels) 
-                
-                for bbox, prob, label in zip(bboxes, probs, labels):
-                    # TODO: Do this for all cavities. Use message type Cavity.
-                    if label == self.object_name:
-                        cavity_pose = self.get_cavity_pose(pointcloud, bbox)
-                        self.pub_pose.publish(cavity_pose)
-                    else:
-                        continue
-                if self.debug:
-                    # Draw bounding boxes and labels of detections
-                    debug_img = predictions[0].plot()
-                    # publish bbox and label
-                    self.publish_debug_img(debug_img)
-                
-                self.goal_handle.execute()
-                self.destroy_subscription(self.sub_img.sub)
-                self.destroy_subscription(self.sub_point_cloud.sub)
-
-            except CvBridgeError as e:
-                self.get_logger().error(e)
-                return
-        else:
-            self.get_logger().warn("No image received")
-
     def publish_debug_img(self, debug_img):
         debug_img = np.array(debug_img, dtype=np.uint8)
         if debug_img is not None and self.pub_debug is not None:
