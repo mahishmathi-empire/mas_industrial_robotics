@@ -16,7 +16,7 @@ def generate_launch_description():
         name='direct_base_controller',
         output='both',
         parameters=[params],
-        remappings=[('cmd_vel', '/cmd_vel'), ('target_pose', '/target_pose')]
+        remappings=[('cmd_vel', '/cmd_vel'), ('target_pose', '/target_pose'), ('front_scan', '/front_scan')]
     )
 
     return LaunchDescription([
