@@ -8,13 +8,14 @@ from launch_ros.descriptions import ParameterValue
 import os
 
 def generate_launch_description():
-
+    params = os.path.join(get_package_share_directory('mir_direct_base_controller'), 'config','config.yaml')
     # add the gripper controller node
     DirectBaseController = Node(
         package='mir_direct_base_controller',
         executable='direct_base_controller',
         name='direct_base_controller',
         output='both',
+        parameters=[params],
         remappings=[('cmd_vel', '/cmd_vel'), ('target_pose', '/target_pose')]
     )
 
