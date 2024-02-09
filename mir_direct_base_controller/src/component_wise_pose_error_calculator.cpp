@@ -22,7 +22,7 @@ bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::Shared
   error.linear_z = pose_out_.pose.position.z - origin_pose->pose.position.z;
 
   tf2::Quaternion q1(origin_pose->pose.orientation.x, origin_pose->pose.orientation.y, origin_pose->pose.orientation.z, origin_pose->pose.orientation.w);
-  tf2::Quaternion q2(target_pose->pose.orientation.x, target_pose->pose.orientation.y, target_pose->pose.orientation.z, target_pose->pose.orientation.w);
+  tf2::Quaternion q2(pose_out_.pose.orientation.x, pose_out_.pose.orientation.y, pose_out_.pose.orientation.z, pose_out_.pose.orientation.w);
 
   tf2::Matrix3x3 m1(q1);
   tf2::Matrix3x3 m2(q2);
@@ -34,6 +34,10 @@ bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::Shared
   error.angular_x = get_shortest_angle_difference(roll_2, roll_1);
   error.angular_y = get_shortest_angle_difference(pitch_2, pitch_1);
   error.angular_z = get_shortest_angle_difference(yaw_2, yaw_1);
+  // std::cout << "error.angular_x: " << error.angular_x << std::endl;
+  // std::cout << "error.angular_y: " << error.angular_y << std::endl;
+  // std::cout << "error.angular_z: " << error.angular_z << std::endl;
+  
 
   return true;
 }
