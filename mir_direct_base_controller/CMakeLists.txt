@@ -20,9 +20,6 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 # find_package(laser_geometry REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(pcl_conversions REQUIRED)
-find_package(pcl_ros REQUIRED)
-find_package(PCL 1.10 REQUIRED)
 
 add_executable(direct_base_controller 
   # src/main.cpp
@@ -49,8 +46,6 @@ tf2_geometry_msgs
 tf2_sensor_msgs
 tf2_ros
 sensor_msgs
-pcl_conversions 
-pcl_ros
 )
 
 install(TARGETS
@@ -60,6 +55,10 @@ install(TARGETS
 install(DIRECTORY
   launch/
   DESTINATION share/${PROJECT_NAME}/launch
+)
+install(DIRECTORY
+  config/
+  DESTINATION share/${PROJECT_NAME}/config
 )
 
 ament_package()
