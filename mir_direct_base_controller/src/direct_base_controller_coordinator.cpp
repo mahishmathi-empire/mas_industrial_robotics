@@ -1,5 +1,26 @@
 #include "direct_base_controller_coordinator.hpp"
 
+double threshold_linear_x;
+double threshold_linear_y;
+double threshold_linear_z;
+double threshold_angular_x;
+double threshold_angular_y;
+double threshold_angular_z;
+double p_gain_x;
+double p_gain_y;
+double p_gain_z;
+double p_gain_roll;
+double p_gain_yaw;
+double p_gain_pitch;
+double max_velocity_x;
+double max_velocity_y;
+double max_velocity_z;
+double max_velocity_roll;
+double max_velocity_pitch;
+double max_velocity_yaw;
+double loop_rate;
+bool use_collision_avoidance;
+
 DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     : Node("direct_base_controller")
 {
@@ -14,30 +35,12 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
         std::bind(&DirectBaseControllerCoordinator::laserdataCallback, this, std::placeholders::_1));
     target_pose_received = false;
     laser_data_received = false;
-    useCollisionAvoidance = false;
+    useCollisionAvoidance = use_collision_avoidance;
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
 }
-double threshold_linear_x;
-double threshold_linear_y;
-double threshold_angular_z;
-double wait_for_transform;
-double p_gain_x;
-double p_gain_y;
-double p_gain_yaw;
-double max_velocity_x;
-double max_velocity_y;
-double max_velocity_z;
-double max_velocity_roll;
-double max_velocity_pitch;
-double max_velocity_yaw;
-double front_laser_threshold;
-double right_laser_threshold;
-double rear_laser_threshold;
-double left_laser_threshold;
-bool use_collision_avoidance;
 
 void DirectBaseControllerCoordinator::targetPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
@@ -55,45 +58,49 @@ void DirectBaseControllerCoordinator::readParamsFromConf()
 {
     this->declare_parameter("threshold_linear_x", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("threshold_linear_y", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("threshold_linear_z", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("threshold_angular_x", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("threshold_angular_y", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("threshold_angular_z", rclcpp::PARAMETER_DOUBLE);
-    this->declare_parameter("wait_for_transform", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("p_gain_x", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("p_gain_y", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_z", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_roll", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("p_gain_yaw", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_pitch", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_x", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_y", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_z", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_roll", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_pitch", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("max_velocity_yaw", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("loop_rate", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("use_collision_avoidance", rclcpp::PARAMETER_BOOL);
-    this->declare_parameter("front_laser_threshold", rclcpp::PARAMETER_DOUBLE);
-    this->declare_parameter("right_laser_threshold", rclcpp::PARAMETER_DOUBLE);
-    this->declare_parameter("rear_laser_threshold", rclcpp::PARAMETER_DOUBLE);
-    this->declare_parameter("left_laser_threshold", rclcpp::PARAMETER_DOUBLE);
+
     threshold_linear_x = this->get_parameter("threshold_linear_x").as_double();
     threshold_linear_y = this->get_parameter("threshold_linear_y").as_double();
+    threshold_linear_z = this->get_parameter("threshold_linear_z").as_double();
+    threshold_angular_x = this->get_parameter("threshold_angular_x").as_double();
+    threshold_angular_y = this->get_parameter("threshold_angular_y").as_double();
     threshold_angular_z = this->get_parameter("threshold_angular_z").as_double();
-    wait_for_transform = this->get_parameter("wait_for_transform").as_double();
     p_gain_x = this->get_parameter("p_gain_x").as_double();
     p_gain_y = this->get_parameter("p_gain_y").as_double();
+    p_gain_z = this->get_parameter("p_gain_z").as_double();
+    p_gain_roll = this->get_parameter("p_gain_roll").as_double();
     p_gain_yaw = this->get_parameter("p_gain_yaw").as_double();
+    p_gain_pitch = this->get_parameter("p_gain_pitch").as_double();
     max_velocity_x = this->get_parameter("max_velocity_x").as_double();
     max_velocity_y = this->get_parameter("max_velocity_y").as_double();
     max_velocity_z = this->get_parameter("max_velocity_z").as_double();
     max_velocity_roll = this->get_parameter("max_velocity_roll").as_double();
     max_velocity_pitch = this->get_parameter("max_velocity_pitch").as_double();
     max_velocity_yaw = this->get_parameter("max_velocity_yaw").as_double();
-    front_laser_threshold = this->get_parameter("front_laser_threshold").as_double();
-    right_laser_threshold = this->get_parameter("right_laser_threshold").as_double();
-    rear_laser_threshold = this->get_parameter("rear_laser_threshold").as_double();
-    left_laser_threshold = this->get_parameter("left_laser_threshold").as_double();
+    loop_rate = this->get_parameter("loop_rate").as_double();
     use_collision_avoidance = this->get_parameter("use_collision_avoidance").as_bool();
 }
 
 void DirectBaseControllerCoordinator::start()
 {
-
     readParamsFromConf();
     RCLCPP_INFO(get_logger(), "Ready to start...");
     std::string state = "RUNNING";
@@ -128,7 +135,7 @@ void DirectBaseControllerCoordinator::runningState()
             publish_zero_state();
         }
         ComponentWisePoseErrorMonitor monitor;
-        monitor.setParameters(0.02, 0.02, 15, 15, 15, 0.04);
+        monitor.setParameters(threshold_linear_x, threshold_linear_y, threshold_linear_z, threshold_angular_x, threshold_angular_y, threshold_angular_z);
         if (monitor.isComponentWisePoseErrorWithinThreshold(error))
         {
             RCLCPP_INFO(get_logger(), "error within threshold");
@@ -152,20 +159,20 @@ void DirectBaseControllerCoordinator::runningState()
             }
             else
             {
-                constants.p_gain_x = 1.4;
-                constants.p_gain_y = 1.4;
-                constants.p_gain_z = 1.4;
-                constants.p_gain_roll = 1.4;
-                constants.p_gain_pitch = 1.4;
-                constants.p_gain_yaw = 1.2;
+                constants.p_gain_x = p_gain_x;
+                constants.p_gain_y = p_gain_y;
+                constants.p_gain_z = p_gain_z;
+                constants.p_gain_roll = p_gain_roll;
+                constants.p_gain_pitch = p_gain_pitch;
+                constants.p_gain_yaw = p_gain_yaw;
                 cartesian_velocity = get_cartesian_velocity(error, constants);
 
-                limiter.max_velocity_x = 0.65;
-                limiter.max_velocity_y = 0.6;
-                limiter.max_velocity_z = 0.0;
-                limiter.max_velocity_roll = 0.0;
-                limiter.max_velocity_pitch = 0.0;
-                limiter.max_velocity_yaw = 0.6;
+                limiter.max_velocity_x = max_velocity_x;
+                limiter.max_velocity_y = max_velocity_y;
+                limiter.max_velocity_z = max_velocity_z;
+                limiter.max_velocity_roll = max_velocity_roll;
+                limiter.max_velocity_pitch = max_velocity_pitch;
+                limiter.max_velocity_yaw = max_velocity_yaw;
                 limited_twist = get_limited_twist(cartesian_velocity, limiter);
                 synchronized_twist = twistSynchronizer.synchronizeTwist(limited_twist, error);
                 baseTwist->publish(synchronized_twist);
