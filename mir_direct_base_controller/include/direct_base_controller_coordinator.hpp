@@ -41,7 +41,7 @@ private:
     void obstical_avoidance();
     void preprocess_laser_data();
     void publish_zero_state();
-
+    void readParamsFromConf();
     // rclcpp::Rate loopRate;
     // rclcpp::Rate idleLoopRate;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};

@@ -5,8 +5,8 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
 {
     baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
-    rclcpp::QoS laser_scan_qos(10); // Keep last 10 messages
-    laser_scan_qos.best_effort(); // Set reliability to best effort
+    rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
+    laser_scan_qos.best_effort();         // Set reliability to best effort
     laser_scan_qos.durability_volatile(); // Set durability to volatile
 
     laserdata_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
@@ -20,6 +20,25 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
 
     get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
 }
+double threshold_linear_x;
+double threshold_linear_y;
+double threshold_angular_z;
+double wait_for_transform;
+double p_gain_x;
+double p_gain_y;
+double p_gain_yaw;
+double max_velocity_x;
+double max_velocity_y;
+double max_velocity_z;
+double max_velocity_roll;
+double max_velocity_pitch;
+double max_velocity_yaw;
+double front_laser_threshold;
+double right_laser_threshold;
+double rear_laser_threshold;
+double left_laser_threshold;
+bool use_collision_avoidance;
+
 void DirectBaseControllerCoordinator::targetPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
     targetPoseMsg = msg;
@@ -32,8 +51,50 @@ void DirectBaseControllerCoordinator::laserdataCallback(const sensor_msgs::msg::
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'", "LaserScan received");
 }
 
+void DirectBaseControllerCoordinator::readParamsFromConf()
+{
+    this->declare_parameter("threshold_linear_x", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("threshold_linear_y", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("threshold_angular_z", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("wait_for_transform", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_x", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_y", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("p_gain_yaw", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_x", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_y", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_z", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_roll", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_pitch", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("max_velocity_yaw", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("use_collision_avoidance", rclcpp::PARAMETER_BOOL);
+    this->declare_parameter("front_laser_threshold", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("right_laser_threshold", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("rear_laser_threshold", rclcpp::PARAMETER_DOUBLE);
+    this->declare_parameter("left_laser_threshold", rclcpp::PARAMETER_DOUBLE);
+    threshold_linear_x = this->get_parameter("threshold_linear_x").as_double();
+    threshold_linear_y = this->get_parameter("threshold_linear_y").as_double();
+    threshold_angular_z = this->get_parameter("threshold_angular_z").as_double();
+    wait_for_transform = this->get_parameter("wait_for_transform").as_double();
+    p_gain_x = this->get_parameter("p_gain_x").as_double();
+    p_gain_y = this->get_parameter("p_gain_y").as_double();
+    p_gain_yaw = this->get_parameter("p_gain_yaw").as_double();
+    max_velocity_x = this->get_parameter("max_velocity_x").as_double();
+    max_velocity_y = this->get_parameter("max_velocity_y").as_double();
+    max_velocity_z = this->get_parameter("max_velocity_z").as_double();
+    max_velocity_roll = this->get_parameter("max_velocity_roll").as_double();
+    max_velocity_pitch = this->get_parameter("max_velocity_pitch").as_double();
+    max_velocity_yaw = this->get_parameter("max_velocity_yaw").as_double();
+    front_laser_threshold = this->get_parameter("front_laser_threshold").as_double();
+    right_laser_threshold = this->get_parameter("right_laser_threshold").as_double();
+    rear_laser_threshold = this->get_parameter("rear_laser_threshold").as_double();
+    left_laser_threshold = this->get_parameter("left_laser_threshold").as_double();
+    use_collision_avoidance = this->get_parameter("use_collision_avoidance").as_bool();
+}
+
 void DirectBaseControllerCoordinator::start()
 {
+
+    readParamsFromConf();
     RCLCPP_INFO(get_logger(), "Ready to start...");
     std::string state = "RUNNING";
 
@@ -78,16 +139,19 @@ void DirectBaseControllerCoordinator::runningState()
             if (laser_data_received)
             {
                 preprocess_laser_data();
-                for (float range : laser1_.ranges) {
+                for (float range : laser1_.ranges)
+                {
                     std::cout << "    " << range << std::endl;
                 }
                 obstical_avoidance();
             }
-            if(useCollisionAvoidance){
+            if (useCollisionAvoidance)
+            {
                 std::cout << "Collision avoidance running!" << std::endl;
                 publish_zero_state();
             }
-            else{
+            else
+            {
                 constants.p_gain_x = 1.4;
                 constants.p_gain_y = 1.4;
                 constants.p_gain_z = 1.4;
@@ -107,12 +171,11 @@ void DirectBaseControllerCoordinator::runningState()
                 baseTwist->publish(synchronized_twist);
             }
         }
-        
     }
 }
 void DirectBaseControllerCoordinator::preprocess_laser_data()
 {
-    
+
     for (size_t i = 0; i < laser1_.ranges.size(); ++i)
     {
         // Check for invalid range values (e.g., NaN or Inf)
@@ -141,7 +204,7 @@ void DirectBaseControllerCoordinator::preprocess_laser_data()
 }
 void DirectBaseControllerCoordinator::obstical_avoidance()
 {
-     // Iterate through laser ranges
+    // Iterate through laser ranges
     for (float range : laser1_.ranges)
     {
         // Check if the range is less than 1.0 meter
@@ -151,7 +214,7 @@ void DirectBaseControllerCoordinator::obstical_avoidance()
             std::cout << "Obstacle detected!" << std::endl;
             useCollisionAvoidance = true;
             return; // Stop further processing as obstacle detected
-        }    
+        }
     }
     useCollisionAvoidance = false;
 }
