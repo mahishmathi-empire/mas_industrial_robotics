@@ -20,6 +20,7 @@ double max_velocity_pitch;
 double max_velocity_yaw;
 double loop_rate;
 bool use_collision_avoidance;
+double collision_distance;
 
 DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     : Node("direct_base_controller")
@@ -76,7 +77,7 @@ void DirectBaseControllerCoordinator::readParamsFromConf()
     this->declare_parameter("max_velocity_yaw", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("loop_rate", rclcpp::PARAMETER_DOUBLE);
     this->declare_parameter("use_collision_avoidance", rclcpp::PARAMETER_BOOL);
-
+    this->declare_parameter("collision_distance", rclcpp::PARAMETER_DOUBLE);
     threshold_linear_x = this->get_parameter("threshold_linear_x").as_double();
     threshold_linear_y = this->get_parameter("threshold_linear_y").as_double();
     threshold_linear_z = this->get_parameter("threshold_linear_z").as_double();
@@ -95,6 +96,8 @@ void DirectBaseControllerCoordinator::readParamsFromConf()
     max_velocity_roll = this->get_parameter("max_velocity_roll").as_double();
     max_velocity_pitch = this->get_parameter("max_velocity_pitch").as_double();
     max_velocity_yaw = this->get_parameter("max_velocity_yaw").as_double();
+    RCLCPP_INFO(get_logger(), "Helooo...%f", threshold_linear_x);
+
     loop_rate = this->get_parameter("loop_rate").as_double();
     use_collision_avoidance = this->get_parameter("use_collision_avoidance").as_bool();
 }
@@ -112,11 +115,6 @@ void DirectBaseControllerCoordinator::start()
         loopRate.sleep();
         rclcpp::spin_some(shared_from_this());
     }
-}
-
-void DirectBaseControllerCoordinator::initState()
-{
-    runningState();
 }
 
 void DirectBaseControllerCoordinator::runningState()
@@ -215,7 +213,7 @@ void DirectBaseControllerCoordinator::obstical_avoidance()
     for (float range : laser1_.ranges)
     {
         // Check if the range is less than 1.0 meter
-        if (range < 0.5)
+        if (range < collision_distance)
         {
             // Execute obstacle avoidance action
             std::cout << "Obstacle detected!" << std::endl;

@@ -20,3 +20,4 @@ direct_base_controller:
     max_velocity_yaw: 0.6
     use_collision_avoidance: False
     loop_rate: 100.0
+    collision_distance: 0.5
