@@ -67,9 +67,10 @@ private:
     ComponentWiseCartesianDifference error;
     LimiterParameters limiter;
     bool target_pose_received;
-    rclcpp::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>> baseTwist;
 
-    rclcpp::Subscriber<geometry_msgs::msg::PoseStamped, rclcpp_lifecycle::LifecycleNode> targetPose;
+    // @@@@@@@@@@@@@@@@@@@@@@@@
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr baseTwist;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
     // rclcpp::Subscription<mcr_monitoring_msgs::msg::ComponentWisePoseErrorMonitorFeedback>::SharedPtr collisionFilter;
     // rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr laserDistances;
 
@@ -89,7 +90,9 @@ private:
     TwistSynchronizer twistSynchronizer;
 
     // collision avoidance
-    rclcpp::Subscriber<sensor_msgs::msg::LaserScan, rclcpp_lifecycle::LifecycleNode> laserdata_sub_;
+
+    // @@@@@@@@@@@@@@@@
+    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserdata_sub_;    
     bool useCollisionAvoidance;
     bool laser_data_received;
     sensor_msgs::msg::LaserScan laser1_ ;
