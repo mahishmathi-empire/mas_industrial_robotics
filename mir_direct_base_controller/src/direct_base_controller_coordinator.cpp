@@ -25,22 +25,23 @@ double collision_distance;
 DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     : Node("direct_base_controller")
 {
-    baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
-    targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
-    rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
-    laser_scan_qos.best_effort();         // Set reliability to best effort
-    laser_scan_qos.durability_volatile(); // Set durability to volatile
+    // baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+    // targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
+    // rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
+    // laser_scan_qos.best_effort();         // Set reliability to best effort
+    // laser_scan_qos.durability_volatile(); // Set durability to volatile
 
-    laserdata_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-        "front_scan", laser_scan_qos,
-        std::bind(&DirectBaseControllerCoordinator::laserdataCallback, this, std::placeholders::_1));
-    target_pose_received = false;
-    laser_data_received = false;
-    useCollisionAvoidance = use_collision_avoidance;
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+    // laserdata_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
+    //     "front_scan", laser_scan_qos,
+    //     std::bind(&DirectBaseControllerCoordinator::laserdataCallback, this, std::placeholders::_1));
+    // target_pose_received = false;
+    // laser_data_received = false;
+    // useCollisionAvoidance = use_collision_avoidance;
+    // tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    // tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
+    // get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
+    RCLCPP_INFO(get_logger(), "Node created.");
 }
 
 void DirectBaseControllerCoordinator::targetPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -228,31 +229,69 @@ void DirectBaseControllerCoordinator::publish_zero_state()
 
     baseTwist->publish(zero_twist);
 }
-// void DirectBaseControllerCoordinator::on_activate() override
-// {
-//     RCLCPP_INFO(get_logger(), "Node activated.");
-//     // Start your node's operation here
-//     start();
-// }
+void DirectBaseControllerCoordinator::on_configure()
+{
+    RCLCPP_INFO(get_logger(), "Node configured.");
+    // Initialize your node's state here
+    baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+    targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
+    rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
+    laser_scan_qos.best_effort();         // Set reliability to best effort
+    laser_scan_qos.durability_volatile(); // Set durability to volatile
 
-// void DirectBaseControllerCoordinator::on_deactivate() override
-// {
-//     RCLCPP_INFO(get_logger(), "Node deactivated.");
-//     publish_zero_state();
-// }
+    laserdata_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        "front_scan", laser_scan_qos,
+        std::bind(&DirectBaseControllerCoordinator::laserdataCallback, this, std::placeholders::_1));
+    target_pose_received = false;
+    laser_data_received = false;
+    useCollisionAvoidance = use_collision_avoidance;
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-// void DirectBaseControllerCoordinator::on_cleanup() override
-// {
-//     RCLCPP_INFO(get_logger(), "Node cleaned up.");
-//     baseTwist.reset(); // Release the publisher
-//     targetPose.reset(); // Release the subscriber
-//     laserDistances.reset(); // Release the subscriber
-//     tf_buffer_.reset(); // Release the tf2 buffer
-// }
+    get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+void DirectBaseControllerCoordinator::on_activate()
+{
+    RCLCPP_INFO(get_logger(), "Node activated.");
+    // Start your node's operation here
+    baseTwist -> on_activate();
+    targetPose -> on_activate();
+    laserdata_sub_ -> on_activate();
+    start();
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+void DirectBaseControllerCoordinator::on_deactivate()
+{
+    RCLCPP_INFO(get_logger(), "Node deactivated.");
+    publish_zero_state();
+    baseTwist -> on_deactivate();
+    targetPose.unsubscribe(); 
+    laserdata_sub_.unsubscribe();
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+void DirectBaseControllerCoordinator::on_cleanup()
+{
+    RCLCPP_INFO(get_logger(), "Node cleaned up.");
+    baseTwist.reset(); // Release the publisher
+    targetPose.reset(); // Release the subscriber
+    laserDistances.reset(); // Release the subscriber
+    tf_buffer_.reset(); // Release the tf2 buffer
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+void DirectBaseControllerCoordinator::on_shutdown()
+{
+    RCLCPP_INFO(get_logger(), "Node shutting down.");
+    // Perform any shutdown operations here
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<DirectBaseControllerCoordinator>();
     node->start();
+    // rclcpp::shutdown();
     return 0;
 }

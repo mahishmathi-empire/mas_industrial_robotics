@@ -17,17 +17,33 @@
 #include "twistsynchronizer.hpp"
 // #include "laser_geometry/laser_geometry.h"
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 
-
-class DirectBaseControllerCoordinator : public rclcpp::Node {
+class DirectBaseControllerCoordinator : public rclcpp_lifecycle::LifecycleNode {
 public:
     DirectBaseControllerCoordinator();
 
     void start();
-// protected:
-//     void on_activate() override;
-//     void on_deactivate() override;
-//     void on_cleanup() override;
+    /// Transition callback for state configuring
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_configure(const rclcpp_lifecycle::State &);
+
+    /// Transition callback for state activating
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_activate(const rclcpp_lifecycle::State & state);
+
+    /// Transition callback for state deactivating
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_deactivate(const rclcpp_lifecycle::State & state);
+
+      /// Transition callback for state cleaningup
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_cleanup(const rclcpp_lifecycle::State &);
+
+    /// Transition callback for state shutting down
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_shutdown(const rclcpp_lifecycle::State & state);
 private:
     // void eventInCallback(const std_msgs::msg::String::SharedPtr msg);
     void targetPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -36,7 +52,7 @@ private:
     void laserdataCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
     // void convertLaserScanToPointCloud(const sensor_msgs::msg::LaserScan::SharedPtr laser_scan,
     //                                 pcl::PointCloud<pcl::PointXYZ> &pointcloud);
-    void initState();
+    // void initState();
     void runningState();
     void obstical_avoidance();
     void preprocess_laser_data();
@@ -51,11 +67,11 @@ private:
     ComponentWiseCartesianDifference error;
     LimiterParameters limiter;
     bool target_pose_received;
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr baseTwist;
+    rclcpp::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>> baseTwist;
 
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
+    rclcpp::Subscriber<geometry_msgs::msg::PoseStamped, rclcpp_lifecycle::LifecycleNode> targetPose;
     // rclcpp::Subscription<mcr_monitoring_msgs::msg::ComponentWisePoseErrorMonitorFeedback>::SharedPtr collisionFilter;
-    rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr laserDistances;
+    // rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr laserDistances;
 
     std::string event;
     geometry_msgs::msg::Twist zero_twist;
@@ -73,9 +89,10 @@ private:
     TwistSynchronizer twistSynchronizer;
 
     // collision avoidance
-    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserdata_sub_;
+    rclcpp::Subscriber<sensor_msgs::msg::LaserScan, rclcpp_lifecycle::LifecycleNode> laserdata_sub_;
     bool useCollisionAvoidance;
     bool laser_data_received;
     sensor_msgs::msg::LaserScan laser1_ ;
     // pcl::PointCloud<pcl::PointXYZ> pointcloud;
+    
 };
