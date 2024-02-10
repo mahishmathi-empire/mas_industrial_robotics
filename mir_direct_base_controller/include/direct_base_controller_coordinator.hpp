@@ -71,16 +71,15 @@ private:
     // @@@@@@@@@@@@@@@@@@@@@@@@
     // rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr baseTwist;
     std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>> baseTwist;
-    // rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped, rclcpp_lifecycle::LifecycleNode>::SharedPtr targetPose;
-    // std::shared_ptr<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>> sub_recognized_image_list_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
+    // rclcpp::Subscription<geometry_msgs::msg::Po3seStamped, rclcpp_lifecycle::LifecycleNode> targetPose;
     // rclcpp::Subscription<mcr_monitoring_msgs::msg::ComponentWisePoseErrorMonitorFeedback>::SharedPtr collisionFilter;
     // rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr laserDistances;
 
     std::string event;
     geometry_msgs::msg::Twist zero_twist;
     geometry_msgs::msg::PoseStamped::SharedPtr targetPoseMsg;
-    std::vector<float> laserDistancesData;
+    // std::vector<float> laserDistancesData;
 
     // ComponentWisePoseErrorCalculator componentWisePoseErrorCalculator;
     ComponentWisePoseErrorMonitor componentWisePoseErrorMonitor;
