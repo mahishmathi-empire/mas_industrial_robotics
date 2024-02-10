@@ -175,6 +175,7 @@ void DirectBaseControllerCoordinator::runningState()
                 limited_twist = get_limited_twist(cartesian_velocity, limiter);
                 synchronized_twist = twistSynchronizer.synchronizeTwist(limited_twist, error);
                 baseTwist->publish(synchronized_twist);
+                obstical_avoidance();
             }
         }
     }
@@ -219,6 +220,7 @@ void DirectBaseControllerCoordinator::obstical_avoidance()
             // Execute obstacle avoidance action
             std::cout << "Obstacle detected!" << std::endl;
             useCollisionAvoidance = true;
+            publish_zero_state();
             return; // Stop further processing as obstacle detected
         }
     }
@@ -254,8 +256,8 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_activate(const rclcpp_lifecycle::State &){
     RCLCPP_INFO(get_logger(), "Node activated.");
     // Start your node's operation here
-    // baseTwist->on_activate();
-    // targetPose->on_activate();
+    baseTwist->on_activate();
+    targetPose.subscribe();
     // laserdata_sub_->on_activate();
     start();
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;

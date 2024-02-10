@@ -69,8 +69,11 @@ private:
     bool target_pose_received;
 
     // @@@@@@@@@@@@@@@@@@@@@@@@
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr baseTwist;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
+    // rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr baseTwist;
+    std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>> baseTwist;
+    // rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr targetPose;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped, rclcpp_lifecycle::LifecycleNode>::SharedPtr targetPose;
+    // std::shared_ptr<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>> sub_recognized_image_list_;
     // rclcpp::Subscription<mcr_monitoring_msgs::msg::ComponentWisePoseErrorMonitorFeedback>::SharedPtr collisionFilter;
     // rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr laserDistances;
 
