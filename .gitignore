@@ -1,1 +1,8 @@
 mir_direct_base_controller/.vscode/
+mir_direct_base_controller/.vscode/
+mir_direct_base_controller/include/.vscode/
+mir_direct_base_controller/src/.vscode/
+mir_direct_base_controller/src/laser_distances_node.cpp
+
+mir_direct_base_controller/include/laser_distances_node.hpp
+.vscode/
