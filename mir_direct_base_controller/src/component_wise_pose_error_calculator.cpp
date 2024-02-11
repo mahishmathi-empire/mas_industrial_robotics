@@ -8,7 +8,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 /**
  * Used for calculating error.
-*/
+ */
 bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::SharedPtr origin_pose,
                                    const geometry_msgs::msg::PoseStamped::SharedPtr target_pose,
                                    ComponentWiseCartesianDifference &error,
@@ -40,14 +40,13 @@ bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::Shared
   // std::cout << "error.angular_x: " << error.angular_x << std::endl;
   // std::cout << "error.angular_y: " << error.angular_y << std::endl;
   // std::cout << "error.angular_z: " << error.angular_z << std::endl;
-  
 
   return true;
 }
 
 /**
  * Transforming position
-*/
+ */
 bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_pose,
                     const geometry_msgs::msg::PoseStamped::SharedPtr target_pose,
                     std::unique_ptr<tf2_ros::Buffer> &tf_buffer_,
@@ -70,7 +69,7 @@ bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_p
 // offset not added
 /**
  * Finding the smallest difference for angular error.
-*/
+ */
 float get_shortest_angle_difference(float angle_1, float angle_2)
 {
   return std::atan2(std::sin(angle_1 - angle_2), std::cos(angle_1 - angle_2));

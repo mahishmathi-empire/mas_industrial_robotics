@@ -9,7 +9,7 @@ ComponentWisePoseErrorMonitor::ComponentWisePoseErrorMonitor()
 
 /**
  * Setting params for the component error checker.
-*/
+ */
 void ComponentWisePoseErrorMonitor::setParameters(double threshold_linear_x, double threshold_linear_y, double threshold_linear_z,
                                                   double threshold_angular_x, double threshold_angular_y, double threshold_angular_z)
 {
@@ -23,8 +23,8 @@ void ComponentWisePoseErrorMonitor::setParameters(double threshold_linear_x, dou
 
 /**
  * Checking if error is violating any threshold limit or not.
-*/
-bool ComponentWisePoseErrorMonitor::isComponentWisePoseErrorWithinThreshold(const ComponentWiseCartesianDifference & pose_error)
+ */
+bool ComponentWisePoseErrorMonitor::isComponentWisePoseErrorWithinThreshold(const ComponentWiseCartesianDifference &pose_error)
 {
     bool is_linear_x_within_tolerance = std::abs(pose_error.linear_x) < threshold_linear_x;
     bool is_linear_y_within_tolerance = std::abs(pose_error.linear_y) < threshold_linear_y;

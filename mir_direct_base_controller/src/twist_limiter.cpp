@@ -2,7 +2,7 @@
 #include "twist_limiter.hpp"
 /**
  * Getting an allowed value for current twist value compared with max allowed twist value.
-*/
+ */
 double limit_value(double value, double limit)
 {
     double limited_value = 0;
@@ -16,7 +16,7 @@ double limit_value(double value, double limit)
 }
 /**
  * If any of twist values violated max allowed value, we replace it.
-*/
+ */
 geometry_msgs::msg::Twist get_limited_twist(const geometry_msgs::msg::Twist &twist, const LimiterParameters &lp)
 {
     geometry_msgs::msg::Twist limited_twist;

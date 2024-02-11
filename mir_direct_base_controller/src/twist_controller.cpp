@@ -4,7 +4,7 @@
 
 /**
  * getting the velocity for one dimension.
-*/
+ */
 double control(double proportional_constant, double set_value, double current_value)
 {
     double error = set_value - current_value;
@@ -14,7 +14,7 @@ double control(double proportional_constant, double set_value, double current_va
 
 /**
  * getting the velocity for Twist.
-*/
+ */
 geometry_msgs::msg::Twist get_cartesian_velocity(const ComponentWiseCartesianDifference &cw, const ControllerParameters &cp)
 {
     geometry_msgs::msg::Twist cartesian_velocity;

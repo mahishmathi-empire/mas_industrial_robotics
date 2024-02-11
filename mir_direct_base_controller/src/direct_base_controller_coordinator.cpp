@@ -1,6 +1,5 @@
 #include "direct_base_controller_coordinator.hpp"
 
-
 /*
  * Params used in the direct controller.
  */
@@ -27,9 +26,9 @@ bool use_collision_avoidance;
 double collision_distance;
 
 /**
- * This component moves the mobile base in Cartesian space until a pose is reached. 
+ * This component moves the mobile base in Cartesian space until a pose is reached.
  * The input pose must be provided in some static world frame.
-*/
+ */
 DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     : LifecycleNode("direct_base_controller")
 {
@@ -54,7 +53,7 @@ DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
 
 /**
  * Obtains the target pose.
-*/
+ */
 void DirectBaseControllerCoordinator::targetPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
     targetPoseMsg = msg;
@@ -72,7 +71,7 @@ void DirectBaseControllerCoordinator::laserdataCallback(const sensor_msgs::msg::
 }
 /**
  * Reads the data from the file config.yaml.
-*/
+ */
 void DirectBaseControllerCoordinator::readParamsFromConf()
 {
     this->declare_parameter("threshold_linear_x", rclcpp::PARAMETER_DOUBLE);
@@ -122,7 +121,7 @@ void DirectBaseControllerCoordinator::readParamsFromConf()
 
 /**
  * Starts the robot running.
-*/
+ */
 void DirectBaseControllerCoordinator::start()
 {
     readParamsFromConf();
@@ -140,7 +139,7 @@ void DirectBaseControllerCoordinator::start()
 
 /**
  * Running state of the robot.
-*/
+ */
 void DirectBaseControllerCoordinator::runningState()
 {
     auto originPose = std::make_shared<geometry_msgs::msg::PoseStamped>();
@@ -211,8 +210,8 @@ void DirectBaseControllerCoordinator::runningState()
 }
 
 /**
- * Preprocessing the data obtained from. 
-*/
+ * Preprocessing the data obtained from.
+ */
 void DirectBaseControllerCoordinator::preprocess_laser_data()
 {
 
@@ -245,7 +244,7 @@ void DirectBaseControllerCoordinator::preprocess_laser_data()
 
 /**
  * Checking for close obstacles and stopping if found any.
-*/
+ */
 void DirectBaseControllerCoordinator::obstical_avoidance()
 {
     // Iterate through laser ranges
@@ -266,7 +265,7 @@ void DirectBaseControllerCoordinator::obstical_avoidance()
 
 /**
  * Stopping the robbot from moving.
-*/
+ */
 void DirectBaseControllerCoordinator::publish_zero_state()
 {
     baseTwist->publish(zero_twist);
@@ -274,7 +273,7 @@ void DirectBaseControllerCoordinator::publish_zero_state()
 
 /**
  * NodeLifeCycle: Configuring the node.
-*/
+ */
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_configure(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node configured.");
@@ -300,7 +299,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 
 /**
  * NodeLifeCycle: Activating the node.
-*/
+ */
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_activate(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node activated.");
@@ -315,7 +314,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 
 /**
  * NodeLifeCycle: Deactivating the node.
-*/
+ */
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_deactivate(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node deactivated.");
@@ -328,7 +327,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 
 /**
  * NodeLifeCycle: CleaningUp the node.
-*/
+ */
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_cleanup(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node cleaned up.");
@@ -341,7 +340,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 
 /**
  * NodeLifeCycle: Shutting Down the node.
-*/
+ */
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_shutdown(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node shutting down.");
@@ -351,7 +350,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 
 /**
  * Main function of the node.
-*/
+ */
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
