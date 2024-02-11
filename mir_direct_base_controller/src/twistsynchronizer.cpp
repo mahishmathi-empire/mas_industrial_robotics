@@ -5,12 +5,16 @@ TwistSynchronizer::TwistSynchronizer() : angularSynchronization(true),
                                          nearZero(0.001)
 {
 }
-
+/**
+ * Setting if synchronization is needed.
+ */
 void TwistSynchronizer::setAngularSynchronization(bool angularSynchronization)
 {
     this->angularSynchronization = angularSynchronization;
 }
-
+/**
+ * Synchronizing twist values.
+*/
 geometry_msgs::msg::Twist TwistSynchronizer::synchronizeTwist(const geometry_msgs::msg::Twist &twist, const ComponentWiseCartesianDifference &poseError)
 {
     geometry_msgs::msg::Twist synchronizedTwist;
