@@ -18,7 +18,9 @@ double cal_dist(double dist, double speed)
     return std::abs(dist / speed);
 }
 
-// Function to calculate the maximum time required to reach the goal
+/**
+ * Calculating the maximum time required to reach the goal
+ * */
 double calculate_max_time(const std::vector<double> &error, const std::vector<double> &velocity, bool angular_synchronization, double zero)
 {
     assert(error.size() == velocity.size());
@@ -47,7 +49,9 @@ double synchronize_velocity(double dist, double vel, double max_time)
     return (max_time && vel) ? (std::abs(dist) / max_time) * sign(vel) : 0.0;
 }
 
-// Function to calculate the synchronized velocity
+/**
+ * Calculating the synchronized velocity
+ */
 std::vector<double> calculate_sync_velocity(const std::vector<double> &error, const std::vector<double> &velocity, double max_time, bool angular_synchronization)
 {
     assert(error.size() == velocity.size());
