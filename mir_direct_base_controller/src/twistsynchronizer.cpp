@@ -2,9 +2,7 @@
 #include "twist_synchronizer_utils.hpp"
 
 TwistSynchronizer::TwistSynchronizer() : angularSynchronization(true),
-                                         nearZero(0.001)
-{
-}
+                                         nearZero(0.001) {}
 
 void TwistSynchronizer::setAngularSynchronization(bool angularSynchronization)
 {

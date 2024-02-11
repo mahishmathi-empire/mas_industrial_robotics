@@ -1,3 +1,10 @@
+/*
+ * Copyright 2024 Bonn-Rhein-Sieg University
+ *
+ * Author: Gaurav Shetty, , 
+ *
+ */
+
 #include "direct_base_controller_coordinator.hpp"
 
 double threshold_linear_x;
@@ -25,22 +32,6 @@ double collision_distance;
 DirectBaseControllerCoordinator::DirectBaseControllerCoordinator()
     : LifecycleNode("direct_base_controller")
 {
-    // baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
-    // targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
-    // rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
-    // laser_scan_qos.best_effort();         // Set reliability to best effort
-    // laser_scan_qos.durability_volatile(); // Set durability to volatile
-
-    // laserdata_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-    //     "front_scan", laser_scan_qos,
-    //     std::bind(&DirectBaseControllerCoordinator::laserdataCallback, this, std::placeholders::_1));
-    // target_pose_received = false;
-    // laser_data_received = false;
-    // useCollisionAvoidance = use_collision_avoidance;
-    // tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-    // tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-
-    // get_parameter_or<std::string>("base_frame", baseFrame, "base_footprint");
     RCLCPP_INFO(get_logger(), "Node created.");
 }
 
@@ -103,7 +94,7 @@ void DirectBaseControllerCoordinator::readParamsFromConf()
     loop_rate = this->get_parameter("loop_rate").as_double();
     use_collision_avoidance = this->get_parameter("use_collision_avoidance").as_bool();
 }
-// bool startedAlready = false;
+
 void DirectBaseControllerCoordinator::start()
 {
     readParamsFromConf();
@@ -115,7 +106,6 @@ void DirectBaseControllerCoordinator::start()
     {
         runningState();
         loopRate.sleep();
-        // if(!startedAlready)
         rclcpp::spin_some(this -> get_node_base_interface());
     }
 }
@@ -149,10 +139,6 @@ void DirectBaseControllerCoordinator::runningState()
             {
                 std::cout << "laser data received" << std::endl;
                 preprocess_laser_data();
-                // for (float range : laser1_.ranges)
-                // {
-                //     std::cout << "    " << range << std::endl;
-                // }
                 std::cout << "laser data processed" << std::endl;
                 obstical_avoidance();
                 std::cout << "obstacle avoidance ran" << std::endl;
@@ -172,7 +158,6 @@ void DirectBaseControllerCoordinator::runningState()
                     constants.p_gain_pitch = p_gain_pitch;
                     constants.p_gain_yaw = p_gain_yaw;
                     cartesian_velocity = get_cartesian_velocity(error, constants);
-
                     limiter.max_velocity_x = max_velocity_x;
                     limiter.max_velocity_y = max_velocity_y;
                     limiter.max_velocity_z = max_velocity_z;
@@ -182,7 +167,6 @@ void DirectBaseControllerCoordinator::runningState()
                     limited_twist = get_limited_twist(cartesian_velocity, limiter);
                     synchronized_twist = twistSynchronizer.synchronizeTwist(limited_twist, error);
                     baseTwist->publish(synchronized_twist);
-                    // obstical_avoidance();
                 }
             }
         }
@@ -231,9 +215,8 @@ void DirectBaseControllerCoordinator::obstical_avoidance()
             // publish_zero_state();
             break; // Stop further processing as obstacle detected
         }
-        
+        useCollisionAvoidance = false;
     }
-    // useCollisionAvoidance = false;
 }
 void DirectBaseControllerCoordinator::publish_zero_state()
 {
@@ -243,7 +226,6 @@ void DirectBaseControllerCoordinator::publish_zero_state()
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_configure(const rclcpp_lifecycle::State&)
 {
     RCLCPP_INFO(get_logger(), "Node configured.");
-    // Initialize your node's state here
     baseTwist = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     targetPose = create_subscription<geometry_msgs::msg::PoseStamped>("target_pose", 1, std::bind(&DirectBaseControllerCoordinator::targetPoseCallback, this, std::placeholders::_1));
     rclcpp::QoS laser_scan_qos(10);       // Keep last 10 messages
@@ -264,12 +246,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
 }
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_activate(const rclcpp_lifecycle::State &){
     RCLCPP_INFO(get_logger(), "Node activated.");
-    // Start your node's operation here
     baseTwist->on_activate();
-    // targetPose->on_activate();
-    // laserdata_sub_->on_activate();
-    // startedAlready=true;
-    // start();
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -278,8 +255,6 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
     RCLCPP_INFO(get_logger(), "Node deactivated.");
     publish_zero_state();
     baseTwist->on_deactivate();
-    // targetPose->on_deactivate();
-    // laserdata_sub_->on_deactivate();
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -288,14 +263,15 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Direct
     RCLCPP_INFO(get_logger(), "Node cleaned up.");
     baseTwist.reset(); // Release the publisher
     targetPose.reset(); // Release the subscriber
-    // laserDistances.reset(); // Release the subscriber
     tf_buffer_.reset(); // Release the tf2 buffer
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn DirectBaseControllerCoordinator::on_shutdown(const rclcpp_lifecycle::State &)
 {
     RCLCPP_INFO(get_logger(), "Node shutting down.");
-    // Perform any shutdown operations here
+    baseTwist.reset(); // Release the publisher
+    targetPose.reset(); // Release the subscriber
+    tf_buffer_.reset(); // Release the tf2 buffer
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 int main(int argc, char *argv[])
@@ -303,7 +279,6 @@ int main(int argc, char *argv[])
     rclcpp::init(argc, argv);
     auto node = std::make_shared<DirectBaseControllerCoordinator>();
     node->start();
-    // rclcpp::spin(node->get_node_base_interface());
     rclcpp::shutdown();
     return 0;
 }

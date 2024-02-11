@@ -20,25 +20,17 @@ bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::Shared
   error.linear_x = pose_out_.pose.position.x - origin_pose->pose.position.x;
   error.linear_y = pose_out_.pose.position.y - origin_pose->pose.position.y;
   error.linear_z = pose_out_.pose.position.z - origin_pose->pose.position.z;
-
   tf2::Quaternion q1(origin_pose->pose.orientation.x, origin_pose->pose.orientation.y, origin_pose->pose.orientation.z, origin_pose->pose.orientation.w);
   tf2::Quaternion q2(pose_out_.pose.orientation.x, pose_out_.pose.orientation.y, pose_out_.pose.orientation.z, pose_out_.pose.orientation.w);
-
   tf2::Matrix3x3 m1(q1);
   tf2::Matrix3x3 m2(q2);
   double roll_1, pitch_1, yaw_1;
   double roll_2, pitch_2, yaw_2;
   m1.getRPY(roll_1, pitch_1, yaw_1);
   m2.getRPY(roll_2, pitch_2, yaw_2);
-
   error.angular_x = get_shortest_angle_difference(roll_2, roll_1);
   error.angular_y = get_shortest_angle_difference(pitch_2, pitch_1);
   error.angular_z = get_shortest_angle_difference(yaw_2, yaw_1);
-  // std::cout << "error.angular_x: " << error.angular_x << std::endl;
-  // std::cout << "error.angular_y: " << error.angular_y << std::endl;
-  // std::cout << "error.angular_z: " << error.angular_z << std::endl;
-  
-
   return true;
 }
 
@@ -49,7 +41,6 @@ bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_p
 {
   try
   {
-
     tf_buffer_->transform<geometry_msgs::msg::PoseStamped>(*target_pose, pose_out_, reference_pose->header.frame_id, tf2::Duration(std::chrono::seconds(1)));
     return true;
   }
@@ -60,8 +51,6 @@ bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_p
   }
   return false;
 }
-
-// offset not added
 
 float get_shortest_angle_difference(float angle_1, float angle_2)
 {

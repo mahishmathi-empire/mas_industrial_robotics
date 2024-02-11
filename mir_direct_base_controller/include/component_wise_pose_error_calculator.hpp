@@ -2,7 +2,6 @@
 #define COMPONENT_WISE_POSE_ERROR_CALCULATOR_HPP
 #include "tf2_ros/buffer.h" 
 #include "geometry_msgs/msg/pose_stamped.hpp"
-
 struct ComponentWiseCartesianDifference
 {
     float linear_x;
@@ -12,7 +11,6 @@ struct ComponentWiseCartesianDifference
     float angular_y;
     float angular_z;
 };
-
 
 bool get_component_wise_pose_error(const geometry_msgs::msg::PoseStamped::SharedPtr origin_pose, 
                                    const geometry_msgs::msg::PoseStamped::SharedPtr target_pose,
@@ -24,8 +22,6 @@ bool transform_pose(const geometry_msgs::msg::PoseStamped::SharedPtr reference_p
                     std::unique_ptr<tf2_ros::Buffer> &tf_buffer_,
                     geometry_msgs::msg::PoseStamped & pose_out_);
 
-//offset not added
-
 float get_shortest_angle_difference(float angle_1, float angle_2);
 
-#endif // COMPONENT_WISE_POSE_ERROR_CALCULATOR_HPP
+#endif 

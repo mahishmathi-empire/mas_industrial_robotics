@@ -5,7 +5,6 @@
 #include <cassert>
 #include <vector>
 
-
 double calculate_max_time(const std::vector<double>& error, const std::vector<double>& velocity, bool angularSynchronization, double zero);
 
 std::vector<double> calculate_sync_velocity(const std::vector<double>& error, const std::vector<double>& velocity, double maxTime, bool angularSynchronization);

@@ -2,7 +2,6 @@
 #define COMPONENT_WISE_POSE_ERROR_MONITOR_HPP
 
 #include "component_wise_pose_error_calculator.hpp"
-
 class ComponentWisePoseErrorMonitor
 {
 public:
@@ -34,4 +33,4 @@ private:
     double loop_rate;
 };
 
-#endif // COMPONENT_WISE_POSE_ERROR_MONITOR_HPP
+#endif
