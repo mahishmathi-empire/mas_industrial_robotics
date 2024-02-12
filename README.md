@@ -1,40 +1,69 @@
 ## Direct Base Controller
 
-### Description
-Given a target pose the youbot should successfully reach that pose with its movement i.e. Its linear and its angular velocities synchronized. The code is written in C++ language with node lifecycle implemented.
+## Description
 
-## Prerequisite
-1. Install cross to with gazebo.
-2. Installs CPP compiler.
-3. Install and IDE.
+By giving a target pose, the youbot should successfully move towards the pose. For addressing the problem, the linear and angular velocities must be synchronized. The code is written in C++ language with node lifecycle implemented.
 
-## Installation
+## Features impelemented
 
-## Usage
+1. Node Life Cycle
+2. Dynamic Variable Configuration
+3. Synchronized linear, angular motion
+4. Obstacle detection
+
+## Environmental setup
+
+1. Install ROS rolling. And then source it.
+
+```
+sudo apt install ros-rolling-desktop
+source /opt/ros/rolling/setup.bash
+```
+
+2. Install gazebo
+```
+sudo apt-get install ros-rolling-ros-gz
+```
+3. Install vscode
+For more information please refer to [vscode download page](https://code.visualstudio.com/docs/setup/linux).
+
+
+## Packages
+The necessary packages are as following:
+1. rclcpp
+2. geometry_msgs
+3. tf2
+4. tf2_ros
+5. tf2_geometry_msgs
+6. tf2_sensor_msgs
+7. sensor_msgs
+8. rclcpp_lifecycle
+
+## Execution
+
 1. Launch gazebo and spawn the youbot in the environment.
-   
+
    ```
     ros2 launch youbot_gazebo start_world.launch.py
-   ```
-   ```
     ros2 launch youbot_gazebo spawn_youbot_ros2.launch.xml
    ```
-2. Run the ROS node
+
+2. Run the ROS node.
    ```
     ros2 launch mir_direct_base_controller direct_base_controller.launch.py
    ```
-   
-4. Launch RQT to publish target pose
+3. Launch RQT to publish target pose.
    ```
     rqt
    ```
+
    ![rqt1](https://github.com/HBRS-SDP/ws23-direct-base-controller/assets/71880369/8e88f344-f157-4502-86e0-8214145c41b1)
 
+4. Run the lifecycle node.
 
+   ```
+   ros2 run lifecycle_controller lifecycle_controller  --ros-args -p lc_name:=direct_base_controller
+   ```
 
-## Configuration
-Set configuration file as follows
-
-Change launch file as follows  
-
-
+## Running
+To see how the program runs, please refer to [wikipage](https://github.com/HBRS-SDP/ws23-direct-base-controller/wiki).
