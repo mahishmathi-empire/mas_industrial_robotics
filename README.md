@@ -66,4 +66,4 @@ The necessary packages are as following:
    ```
 
 ## Running
-To see how the program works please refer to [wikipage](https://github.com/HBRS-SDP/ws23-direct-base-controller/wiki).
+To see how the program runs, please refer to [wikipage](https://github.com/HBRS-SDP/ws23-direct-base-controller/wiki).
