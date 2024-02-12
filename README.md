@@ -65,5 +65,4 @@ The necessary packages are as following:
    ros2 run lifecycle_controller lifecycle_controller  --ros-args -p lc_name:=direct_base_controller
    ```
 
-## Running
-To see how the program runs, please refer to [wikipage](https://github.com/HBRS-SDP/ws23-direct-base-controller/wiki).
+* To understand execution details, please refer to [wikipage](https://github.com/HBRS-SDP/ws23-direct-base-controller/wiki).
