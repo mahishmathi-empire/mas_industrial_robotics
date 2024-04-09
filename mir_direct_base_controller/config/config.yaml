@@ -1,0 +1,23 @@
+direct_base_controller:
+  ros__parameters:
+    threshold_linear_x: 0.02
+    threshold_linear_y: 0.02
+    threshold_linear_z: 15.0
+    threshold_angular_x: 15.0
+    threshold_angular_y: 15.0
+    threshold_angular_z: 0.04
+    p_gain_x: 1.4
+    p_gain_y: 1.4
+    p_gain_z: 1.4
+    p_gain_roll: 1.4
+    p_gain_yaw: 1.2
+    p_gain_pitch: 1.4
+    max_velocity_x: 0.65
+    max_velocity_y: 0.6
+    max_velocity_z: 0.0
+    max_velocity_roll: 0.0
+    max_velocity_pitch: 0.0
+    max_velocity_yaw: 0.6
+    use_collision_avoidance: False
+    loop_rate: 100.0
+    collision_distance: 0.5
