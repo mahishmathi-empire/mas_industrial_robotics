@@ -46,7 +46,14 @@
 
 ### Usage
 
-  - View the youbot in rviz
-    ```bash
-    ros2 launch mir_bringup view_youbot.launch.py
-    ```
+
+- View the youbot in rviz
+  ```bash
+  ros2 launch mir_bringup view_youbot.launch.py
+  ```
+
+- Launch the bringup
+```bash
+ros2 launch mir_bringup robot.launch.py
+```
+
